@@ -4,11 +4,11 @@ import io.teamchallenge.project.bazario.config.JwtTokenProvider;
 import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.web.dto.LoginRequest;
 import io.teamchallenge.project.bazario.web.dto.LoginResponse;
+import io.teamchallenge.project.bazario.web.dto.RefreshTokenRequest;
 import io.teamchallenge.project.bazario.web.dto.RegisterRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +19,16 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
-                           UserService userService, PasswordEncoder passwordEncoder) {
+                           UserService userService, PasswordEncoder passwordEncoder,
+                           RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -36,11 +39,13 @@ public class AuthServiceImpl implements AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        final var userDetails = ((UserDetails) authentication.getPrincipal());
+        final var user = ((User) authentication.getPrincipal());
 
-        final var token = jwtTokenProvider.generateToken(userDetails.getUsername());
+        final var accessToken = jwtTokenProvider.generateToken(user.getUsername());
 
-        return new LoginResponse(token, "");
+        final var refreshToken = refreshTokenService.create(user);
+
+        return new LoginResponse(accessToken, refreshToken.getToken());
     }
 
     @Override
@@ -51,5 +56,22 @@ public class AuthServiceImpl implements AuthService {
                 registerRequest.email(), encodedPassword, registerRequest.phone());
 
         userService.save(user);
+    }
+
+    @Override
+    public LoginResponse refreshToken(RefreshTokenRequest request) {
+        final var token = request.refreshToken();
+
+        final var refreshToken = refreshTokenService.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+
+        refreshTokenService.verifyExpiration(refreshToken)
+                .orElseThrow(() -> new RuntimeException("Refresh token expired"));
+
+        final var user = refreshToken.getUser();
+
+        final var accessToken = jwtTokenProvider.generateToken(user.getUsername());
+
+        return new LoginResponse(accessToken, refreshToken.getToken());
     }
 }

@@ -3,6 +3,7 @@ package io.teamchallenge.project.bazario.web.controller;
 import io.teamchallenge.project.bazario.service.AuthService;
 import io.teamchallenge.project.bazario.web.dto.LoginRequest;
 import io.teamchallenge.project.bazario.web.dto.LoginResponse;
+import io.teamchallenge.project.bazario.web.dto.RefreshTokenRequest;
 import io.teamchallenge.project.bazario.web.dto.RegisterRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +34,12 @@ public class AuthController {
         authService.register(request);
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        final var response = authService.refreshToken(request);
+
+        return ResponseEntity.ok(response);
     }
 }
