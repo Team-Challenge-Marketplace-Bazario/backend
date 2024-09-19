@@ -12,5 +12,6 @@ public interface RefreshTokenService {
 
     Optional<RefreshToken> verifyExpiration(RefreshToken refreshToken);
 
-//    int delete(User user);
+    long deleteByUser(User user);
+
 }

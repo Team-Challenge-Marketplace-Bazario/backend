@@ -74,4 +74,9 @@ public class AuthServiceImpl implements AuthService {
 
         return new LoginResponse(accessToken, refreshToken.getToken());
     }
+
+    @Override
+    public boolean logout(User user) {
+        return refreshTokenService.deleteByUser(user) > 0;
+    }
 }
