@@ -32,6 +32,15 @@ public class User implements UserDetails {
     @Column(name = "phone", nullable = false, length = 13)
     private String phone;
 
+    public User(Long id, String firstName, String lastName, String email, String password, String phone) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.phone = phone;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
@@ -39,7 +48,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return getEmail();
     }
 
     @Override
@@ -48,15 +57,6 @@ public class User implements UserDetails {
     }
 
     public User() {
-    }
-
-    public User(Long id, String firstName, String lastName, String email, String password, String phone) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.password = password;
-        this.phone = phone;
     }
 
     public Long getId() {

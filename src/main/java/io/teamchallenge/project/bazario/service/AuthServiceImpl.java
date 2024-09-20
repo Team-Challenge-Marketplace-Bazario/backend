@@ -2,6 +2,7 @@ package io.teamchallenge.project.bazario.service;
 
 import io.teamchallenge.project.bazario.config.JwtTokenProvider;
 import io.teamchallenge.project.bazario.entity.User;
+import io.teamchallenge.project.bazario.exceptions.JwtException;
 import io.teamchallenge.project.bazario.web.dto.LoginRequest;
 import io.teamchallenge.project.bazario.web.dto.LoginResponse;
 import io.teamchallenge.project.bazario.web.dto.RefreshTokenRequest;
@@ -65,8 +66,9 @@ public class AuthServiceImpl implements AuthService {
         final var refreshToken = refreshTokenService.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
-        refreshTokenService.verifyExpiration(refreshToken)
-                .orElseThrow(() -> new RuntimeException("Refresh token expired"));
+        if (!refreshTokenService.verifyExpiration(refreshToken)) {
+            throw new JwtException("Refresh token expired");
+        }
 
         final var user = refreshToken.getUser();
 

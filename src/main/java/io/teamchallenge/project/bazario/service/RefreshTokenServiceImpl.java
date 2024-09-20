@@ -39,12 +39,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     @Transactional
-    public Optional<RefreshToken> verifyExpiration(RefreshToken refreshToken) {
+    public boolean verifyExpiration(RefreshToken refreshToken) {
         if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
             refreshTokenRepository.delete(refreshToken);
-            return Optional.empty();
+            return false;
         }
-        return Optional.of(refreshToken);
+        return true;
     }
 
     @Override

@@ -1,9 +1,14 @@
 package io.teamchallenge.project.bazario;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public interface Util {
+
+    Logger log = LoggerFactory.getLogger(Util.class);
 
     static void loadPropertiesIntoEnv(String filename) {
         final var envPath = Path.of(filename);
@@ -20,22 +25,18 @@ public interface Util {
                 }
 
                 final var delimiter = line.indexOf('=');
-                if (delimiter == -1) {
-                    continue;
+                if (delimiter != -1) {
+                    final var key = line.substring(0, delimiter).trim();
+                    final var value = line.substring(delimiter + 1).trim();
+
+                    if (!key.isEmpty()) {
+                        System.setProperty(key, value);
+                    }
                 }
-
-                final var key = line.substring(0, delimiter).trim();
-                final var value = line.substring(delimiter + 1).trim();
-
-                if (key.isEmpty()) {
-                    continue;
-                }
-
-                System.setProperty(key, value);
             }
 
         } catch (Exception e) {
-            //todo: add logger here
+            log.error(e.getMessage(), e);
         }
     }
 }

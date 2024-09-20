@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateUser(User user, UpdateUserRequest updateRequest) {
 
-        Predicate<String> isValid = _s -> _s != null && !_s.isBlank();
+        Predicate<String> isValid = str -> str != null && !str.isBlank();
 
         if (isValid.test(updateRequest.firstName())) {
             user.setFirstName(updateRequest.firstName());

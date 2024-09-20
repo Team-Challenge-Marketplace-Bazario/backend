@@ -10,7 +10,7 @@ public interface RefreshTokenService {
 
     RefreshToken create(User user);
 
-    Optional<RefreshToken> verifyExpiration(RefreshToken refreshToken);
+    boolean verifyExpiration(RefreshToken refreshToken);
 
     long deleteByUser(User user);
 

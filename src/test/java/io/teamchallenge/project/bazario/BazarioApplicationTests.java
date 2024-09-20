@@ -8,6 +8,7 @@ class BazarioApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// empty for now
 	}
 
 }
