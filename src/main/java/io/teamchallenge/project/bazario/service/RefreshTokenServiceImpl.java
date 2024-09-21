@@ -29,12 +29,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     @Transactional
-    public RefreshToken create(User user) {
-        return refreshTokenRepository.save(new RefreshToken(
-                null,
-                UUID.randomUUID().toString(),
-                Instant.now().plusSeconds(refreshTokenDurationSeconds),
-                user));
+    public RefreshToken getOrCreate(User user) {
+        final var storedToken = refreshTokenRepository.findByUser(user);
+        if (storedToken.isPresent()) {
+            storedToken.get().setExpiryDate(Instant.now().plusSeconds(refreshTokenDurationSeconds));
+
+            return refreshTokenRepository.save(storedToken.get());
+        } else {
+            return refreshTokenRepository.save(new RefreshToken(
+                    null,
+                    UUID.randomUUID().toString(),
+                    Instant.now().plusSeconds(refreshTokenDurationSeconds),
+                    user));
+        }
     }
 
     @Override
