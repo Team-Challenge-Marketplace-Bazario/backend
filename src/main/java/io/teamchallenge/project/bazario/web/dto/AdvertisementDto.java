@@ -18,6 +18,11 @@ import java.util.List;
 @AllArgsConstructor
 public class AdvertisementDto {
 
+    private static final String TITLE_FIELD = "title";
+    private static final String DESCRIPTION_FIELD = "description";
+    private static final String PRICE_FIELD = "price";
+    private static final String STATUS_FIELD = "status";
+
     private Long id;
 
     @NotBlank
@@ -29,6 +34,8 @@ public class AdvertisementDto {
     @NotBlank
     private String price;
 
+    private Boolean status;
+
     private List<AdvPictureDto> pics;
 
     public AdvertisementDto(Advertisement vo) {
@@ -36,6 +43,7 @@ public class AdvertisementDto {
         this.title = vo.getTitle();
         this.description = vo.getDescription();
         this.price = vo.getPrice().toString();
+        this.status = vo.isStatus();
 
         if (vo.getPictures() != null) {
             this.pics = vo.getPictures().stream()
@@ -49,9 +57,25 @@ public class AdvertisementDto {
         try {
             final var objectMapper = new ObjectMapper();
             final var node = objectMapper.readTree(jsonString);
-            this.title = node.get("title").asText().trim();
-            this.description = node.get("description").asText().trim();
-            this.price = node.get("price").asText().trim();
+
+            if (node.has(TITLE_FIELD)) {
+                this.title = node.get(TITLE_FIELD).asText().trim();
+            }
+
+            if (node.has(DESCRIPTION_FIELD)) {
+                this.description = node.get(DESCRIPTION_FIELD).asText().trim();
+            }
+
+            if (node.has(PRICE_FIELD)) {
+                this.price = node.get(PRICE_FIELD).asText().trim();
+            }
+
+            if (node.has(STATUS_FIELD)) {
+                final var statusValue = node.get(STATUS_FIELD).asText().trim();
+                this.status = "true".equalsIgnoreCase(statusValue) ? Boolean.TRUE : Boolean.FALSE;
+            } else {
+                this.status = Boolean.FALSE;
+            }
         } catch (JsonProcessingException e) {
             throw new AppException("error processing json string", e);
         }

@@ -3,6 +3,9 @@ package io.teamchallenge.project.bazario.web.controller;
 import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.service.AdvertisementService;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/adv")
 public class AdvertisementController {
@@ -21,9 +25,10 @@ public class AdvertisementController {
     }
 
     @PostMapping
-    public ResponseEntity<AdvertisementDto> addAdvertisement(@RequestParam("pics") List<MultipartFile> pics,
-                                                             @RequestParam("adv") String jsonString,
-                                                             @AuthenticationPrincipal User user) {
+    public ResponseEntity<AdvertisementDto> addAdvertisement(
+            @RequestParam(value = "pics", required = false) List<MultipartFile> pics,
+            @RequestParam("adv") String jsonString,
+            @AuthenticationPrincipal User user) {
 
         final var advertisement = advService.add(new AdvertisementDto(jsonString), pics, user);
         return ResponseEntity.ok(new AdvertisementDto(advertisement));
@@ -31,8 +36,8 @@ public class AdvertisementController {
 
     @PostMapping("/{advId}")
     public ResponseEntity<AdvertisementDto> addPicturesToAdvertisement(@PathVariable("advId") Long advertisementId,
-                                                          @RequestParam("pics") List<MultipartFile> pics,
-                                                          @AuthenticationPrincipal User user) {
+                                                                       @RequestParam("pics") List<MultipartFile> pics,
+                                                                       @AuthenticationPrincipal User user) {
 
         final var advertisement = advService.addPictures(advertisementId, pics, user);
 
@@ -41,8 +46,8 @@ public class AdvertisementController {
 
     @DeleteMapping("/{advId}/{pictureId}")
     public ResponseEntity<AdvertisementDto> deleteAdvertisementPicture(@PathVariable("advId") Long advertisementId,
-                                                 @PathVariable("pictureId") Long pictureId,
-                                                 @AuthenticationPrincipal User user) {
+                                                                       @PathVariable("pictureId") Long pictureId,
+                                                                       @AuthenticationPrincipal User user) {
 
         final var advertisement = advService.deletePicture(advertisementId, pictureId, user);
 
@@ -58,5 +63,11 @@ public class AdvertisementController {
                 .toList();
 
         return ResponseEntity.ok(dtoList);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Void> handleEntityNotFoundException(EntityNotFoundException ex) {
+        log.debug(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }

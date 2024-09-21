@@ -3,12 +3,11 @@ package io.teamchallenge.project.bazario.service;
 import io.teamchallenge.project.bazario.entity.AdvPicture;
 import io.teamchallenge.project.bazario.entity.Advertisement;
 import io.teamchallenge.project.bazario.entity.User;
-import io.teamchallenge.project.bazario.exceptions.AdvertisementNotFoundException;
-import io.teamchallenge.project.bazario.exceptions.AdvertisementPictureNotFoundException;
 import io.teamchallenge.project.bazario.helpers.CloudinaryHelper;
 import io.teamchallenge.project.bazario.repository.AdvPictureRepository;
 import io.teamchallenge.project.bazario.repository.AdvertisementRepository;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 public class AdvertisementServiceImpl implements AdvertisementService {
@@ -42,12 +42,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         // 1. upload files to external service
         final var advPicsList = new ArrayList<AdvPicture>();
 
-        for (MultipartFile picFile : pics) {
-            if (picFile.isEmpty()) {
-                continue;
+        if (pics != null) {
+            for (MultipartFile picFile : pics) {
+                if (picFile.isEmpty()) {
+                    continue;
+                }
+                final var uploadResponse = cloudinaryHelper.uploadFile(picFile);
+                advPicsList.add(new AdvPicture(null, uploadResponse.url(), uploadResponse.publicId(), null));
             }
-            final var uploadResponse = cloudinaryHelper.uploadFile(picFile);
-            advPicsList.add(new AdvPicture(null, uploadResponse.url(), uploadResponse.publicId(), null));
         }
 
         // 2. save Adv object
@@ -57,7 +59,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 dto.getDescription(),
                 Collections.emptyList(),
                 new BigDecimal(dto.getPrice()),
-                false,
+                dto.getStatus(),
                 LocalDateTime.now(),
                 user
         ));
@@ -78,33 +80,55 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Transactional
     public Advertisement addPictures(Long advertisementId, List<MultipartFile> pics, User user) {
         final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
-                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Advertisement with id %d not found", advertisementId)));
 
+        final var pictures = new ArrayList<AdvPicture>();
         for (MultipartFile pic : pics) {
             if (pic.isEmpty()) {
                 continue;
             }
             final var uploadResult = cloudinaryHelper.uploadFile(pic);
-            advPictureRepository.save(new AdvPicture(null, uploadResult.url(), uploadResult.publicId(), advertisement));
+            pictures.add(advPictureRepository.save(
+                    new AdvPicture(null, uploadResult.url(), uploadResult.publicId(), advertisement)));
         }
 
-        return getById(advertisementId)
-                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
+        if (advertisement.getPictures() == null) {
+            advertisement.setPictures(pictures);
+        } else {
+            advertisement.setPictures(
+                    Stream.concat(advertisement.getPictures().stream(), pictures.stream())
+                            .toList());
+        }
+
+        return advertisement;
     }
 
     @Override
+    @Transactional
     public Advertisement deletePicture(Long advertisementId, Long pictureId, User user) {
-        final var picture = advPictureRepository.findByIdAndAdvertisementIdAndUser(pictureId, advertisementId, user)
-                .orElseThrow(() -> new AdvertisementPictureNotFoundException(advertisementId));
+        final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Advertisement with id %d not found", advertisementId)));
 
-        if (picture.getExternalToken() != null) {
-            cloudinaryHelper.deleteFile(picture.getExternalToken());
+        if (advertisement.getPictures() == null) {
+            throw new EntityNotFoundException(String.format("Picture with id %d not found", pictureId));
         }
 
-        advPictureRepository.delete(picture);
+        final var advPicture = advertisement.getPictures().stream()
+                .filter(pic -> pic.getId().equals(pictureId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Picture with id %d not found", pictureId)));
 
-        return advertisementRepository.findByIdAndUser(advertisementId, user)
-                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
+        if (advPicture.getExternalToken() != null) {
+            cloudinaryHelper.deleteFile(advPicture.getExternalToken());
+        }
+
+        advPictureRepository.delete(advPicture);
+        advertisement.getPictures().remove(advPicture);
+
+        return advertisement;
     }
 
     @Override
