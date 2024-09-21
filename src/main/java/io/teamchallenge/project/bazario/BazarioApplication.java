@@ -1,5 +1,6 @@
 package io.teamchallenge.project.bazario;
 
+import io.teamchallenge.project.bazario.helpers.EnvHelper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -8,7 +9,7 @@ public class BazarioApplication {
 
     public static void main(String[] args) {
 
-        Util.loadPropertiesIntoEnv(".env");
+        EnvHelper.loadPropertiesIntoEnv(".env");
 
         SpringApplication.run(BazarioApplication.class, args);
     }

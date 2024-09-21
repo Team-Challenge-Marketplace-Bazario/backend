@@ -3,8 +3,7 @@ package io.teamchallenge.project.bazario.helpers;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import io.teamchallenge.project.bazario.exceptions.AppException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,10 +12,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class CloudinaryHelper {
-
-    private static final Logger log = LoggerFactory.getLogger(CloudinaryHelper.class);
 
     private final Cloudinary cloudinary;
 

@@ -1,4 +1,4 @@
-package io.teamchallenge.project.bazario;
+package io.teamchallenge.project.bazario.helpers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public interface Util {
+public interface EnvHelper {
 
-    Logger log = LoggerFactory.getLogger(Util.class);
+    Logger log = LoggerFactory.getLogger(EnvHelper.class);
 
     static void loadPropertiesIntoEnv(String filename) {
         final var envPath = Path.of(filename);
