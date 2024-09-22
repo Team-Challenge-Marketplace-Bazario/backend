@@ -7,18 +7,21 @@ import io.teamchallenge.project.bazario.helpers.CloudinaryHelper;
 import io.teamchallenge.project.bazario.repository.AdvPictureRepository;
 import io.teamchallenge.project.bazario.repository.AdvertisementRepository;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
+import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 @Service
@@ -60,7 +63,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 Collections.emptyList(),
                 new BigDecimal(dto.getPrice()),
                 dto.getStatus(),
-                LocalDateTime.now(),
+                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS),
                 user
         ));
 
@@ -132,12 +135,66 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
-    public Optional<Advertisement> getById(Long advertisementId) {
-        return advertisementRepository.findById(advertisementId);
+    public PagedAdvertisementDto getAllByFilter(String title, boolean status, PageRequest pageRequest) {
+        final var pagedList = advertisementRepository.findAllByTitleContainingAndStatus(title, status, pageRequest);
+
+        final var dtoList = pagedList.getContent().stream()
+                .map(AdvertisementDto::new)
+                .toList();
+
+        return new PagedAdvertisementDto(
+                dtoList,
+                pagedList.getNumber(),
+                pagedList.getTotalPages(),
+                pagedList.getSize());
     }
 
     @Override
-    public List<Advertisement> getAllActive() {
-        return advertisementRepository.getAllByStatus(true);
+    public PageRequest getPageRequest(Integer page, Integer itemsPerPage, List<String> sortFields) {
+        if (page == null || page < 0) {
+            page = 0;
+        }
+
+        if (itemsPerPage == null || itemsPerPage < 1) {
+            itemsPerPage = 20;
+        }
+
+        final var sort = getSort(sortFields);
+
+        return PageRequest.of(page, itemsPerPage, sort);
+    }
+
+    private Sort getSort(List<String> sortFields) {
+
+        if (sortFields == null || sortFields.size() < 2 || sortFields.size() % 2 != 0) {
+            return Sort.by(Sort.Direction.ASC, "id");
+        }
+
+        var sort = Sort.unsorted();
+
+        for (int i = 0; i < sortFields.size(); i += 2) {
+            final var field = getSortProperty(sortFields.get(i));
+            final var direction = getSortDirection(sortFields.get(i + 1));
+
+            if (field != null) {
+                sort = sort.and(Sort.by(direction, field));
+            }
+        }
+
+        return sort;
+    }
+
+    private String getSortProperty(String property) {
+        if ("price".equals(property)) {
+            return "price";
+        } else if ("date".equals(property)) {
+            return "createDate";
+        }
+
+        return null;
+    }
+
+    private Sort.Direction getSortDirection(String direction) {
+        return "desc".equals(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
     }
 }

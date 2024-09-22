@@ -3,6 +3,7 @@ package io.teamchallenge.project.bazario.web.controller;
 import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.service.AdvertisementService;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
+import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -54,15 +55,21 @@ public class AdvertisementController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AdvertisementDto>> getAllActiveAdvertisements() {
-        final var voList = advService.getAllActive();
-        //todo: need to implement pagination, filtering an sorting
+    public ResponseEntity<PagedAdvertisementDto> getAllActiveAdvertisements(
+            @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "sort", required = false) List<String> sort,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "ipp", required = false) Integer itemsPerPage) {
 
-        final var dtoList = voList.stream()
-                .map(AdvertisementDto::new)
-                .toList();
+        final var pageRequest = advService.getPageRequest(page, itemsPerPage, sort);
 
-        return ResponseEntity.ok(dtoList);
+        if (title == null) {
+            title = "";
+        }
+
+        final var pagedDto = advService.getAllByFilter(title, true, pageRequest);
+
+        return ResponseEntity.ok(pagedDto);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)

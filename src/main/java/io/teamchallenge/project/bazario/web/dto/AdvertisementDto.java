@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Getter
@@ -38,12 +39,15 @@ public class AdvertisementDto {
 
     private List<AdvPictureDto> pics;
 
+    private Long createDate;
+
     public AdvertisementDto(Advertisement vo) {
         this.id = vo.getId();
         this.title = vo.getTitle();
         this.description = vo.getDescription();
         this.price = vo.getPrice().toString();
         this.status = vo.isStatus();
+        this.createDate = vo.getCreateDate().toEpochSecond(ZoneOffset.UTC);
 
         if (vo.getPictures() != null) {
             this.pics = vo.getPictures().stream()
