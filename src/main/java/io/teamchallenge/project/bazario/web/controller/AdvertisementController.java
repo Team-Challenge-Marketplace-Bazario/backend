@@ -34,7 +34,7 @@ public class AdvertisementController {
         return ResponseEntity.ok(new AdvertisementDto(advertisement));
     }
 
-    @PostMapping("/{advId}")
+    @PostMapping("/{advId}/pics")
     public ResponseEntity<AdvertisementDto> addPicturesToAdvertisement(@PathVariable("advId") Long advertisementId,
                                                                        @RequestParam("pics") List<MultipartFile> pics,
                                                                        @AuthenticationPrincipal User user) {
@@ -44,11 +44,10 @@ public class AdvertisementController {
         return ResponseEntity.ok(new AdvertisementDto(advertisement));
     }
 
-    @DeleteMapping("/{advId}/{pictureId}")
+    @DeleteMapping("/{advId}/pics/{pictureId}")
     public ResponseEntity<AdvertisementDto> deleteAdvertisementPicture(@PathVariable("advId") Long advertisementId,
                                                                        @PathVariable("pictureId") Long pictureId,
                                                                        @AuthenticationPrincipal User user) {
-
         final var advertisement = advService.deletePicture(advertisementId, pictureId, user);
 
         return ResponseEntity.ok(new AdvertisementDto(advertisement));
@@ -57,6 +56,7 @@ public class AdvertisementController {
     @GetMapping
     public ResponseEntity<List<AdvertisementDto>> getAllActiveAdvertisements() {
         final var voList = advService.getAllActive();
+        //todo: need to implement pagination, filtering an sorting
 
         final var dtoList = voList.stream()
                 .map(AdvertisementDto::new)
