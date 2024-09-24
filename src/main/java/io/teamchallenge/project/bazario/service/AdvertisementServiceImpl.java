@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Service
@@ -162,6 +163,21 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         final var sort = getSort(sortFields);
 
         return PageRequest.of(page, itemsPerPage, sort);
+    }
+
+    @Override
+    public Advertisement getById(Long advId, User user) {
+        final var advertisement = advertisementRepository.findById(advId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Advertisement with id %d not found", advId)));
+
+        // according to business logic only owner can see his own inactive advertisements
+        if (!advertisement.isStatus()
+            && (user == null || !Objects.equals(user.getId(), advertisement.getUser().getId()))) {
+            throw new EntityNotFoundException(String.format("Advertisement with id %d not found", advId));
+        }
+
+        return advertisement;
     }
 
     private Sort getSort(List<String> sortFields) {

@@ -72,6 +72,14 @@ public class AdvertisementController {
         return ResponseEntity.ok(pagedDto);
     }
 
+    @GetMapping("/{advId}")
+    public ResponseEntity<AdvertisementDto> getAdvertisementById(@PathVariable("advId") Long advId,
+                                                                 @AuthenticationPrincipal User user) {
+        final var advertisement = advService.getById(advId, user);
+
+        return ResponseEntity.ok(new AdvertisementDto(advertisement));
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Void> handleEntityNotFoundException(EntityNotFoundException ex) {
         log.debug(ex.getMessage());

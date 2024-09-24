@@ -19,4 +19,6 @@ public interface AdvertisementService {
     PagedAdvertisementDto getAllByFilter(String title, boolean status, PageRequest pageRequest);
 
     PageRequest getPageRequest(Integer page, Integer itemsPerPage, List<String> sort);
+
+    Advertisement getById(Long advId, User user);
 }
