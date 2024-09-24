@@ -92,6 +92,15 @@ public class AdvertisementController {
         return ResponseEntity.ok(new AdvertisementDto(updatedAdvertisement));
     }
 
+    @DeleteMapping("/{advId}")
+    public ResponseEntity<Void> deleteAdvertisement(@PathVariable("advId") Long advId,
+                                                    @AuthenticationPrincipal User user) {
+
+        advService.delete(advId, user);
+
+        return ResponseEntity.ok().build();
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Void> handleEntityNotFoundException(EntityNotFoundException ex) {
         log.debug(ex.getMessage());

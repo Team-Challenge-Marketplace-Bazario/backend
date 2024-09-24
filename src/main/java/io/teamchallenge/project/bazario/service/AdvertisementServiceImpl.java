@@ -11,6 +11,7 @@ import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+@Slf4j
 @Service
 public class AdvertisementServiceImpl implements AdvertisementService {
 
@@ -71,7 +73,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         // 3. save adv_pic objects
         for (AdvPicture advPicture : advPicsList) {
             advPicture.setAdvertisement(advertisement);
-            advPictureRepository.save(advPicture);
+            final var savedPicture = advPictureRepository.save(advPicture);
+            log.debug("picture saved in DB as: {}", savedPicture);
         }
 
         // 4. return adv object
@@ -204,6 +207,26 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         }
 
         return advertisementRepository.save(advertisement);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long advertisementId, User user) {
+        final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Advertisement with id %d not found", advertisementId)));
+
+        // 1. delete all associated pictures
+        final var advPictures = advertisement.getPictures();
+        for (AdvPicture advPicture : advPictures) {
+            if (advPicture.getExternalToken() != null) {
+                cloudinaryHelper.deleteFile(advPicture.getExternalToken());
+                advPictureRepository.delete(advPicture);
+            }
+        }
+
+        // 2. delete adv itself
+        advertisementRepository.delete(advertisement);
     }
 
     private Sort getSort(List<String> sortFields) {

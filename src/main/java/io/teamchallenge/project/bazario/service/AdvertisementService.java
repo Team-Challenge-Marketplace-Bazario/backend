@@ -23,4 +23,6 @@ public interface AdvertisementService {
     Advertisement getById(Long advId, User user);
 
     Advertisement update(AdvertisementDto dto, User user);
+
+    void delete(Long advertisementId, User user);
 }

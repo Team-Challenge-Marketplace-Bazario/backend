@@ -40,4 +40,13 @@ public class AdvPicture {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
+    @Override
+    public String toString() {
+        return "AdvPicture{" +
+               "id=" + id +
+               ", url='" + url + '\'' +
+               ", externalToken='" + externalToken + '\'' +
+               '}';
+    }
 }
