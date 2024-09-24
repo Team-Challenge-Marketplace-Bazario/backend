@@ -3,6 +3,7 @@ package io.teamchallenge.project.bazario.service;
 import io.teamchallenge.project.bazario.entity.AdvPicture;
 import io.teamchallenge.project.bazario.entity.Advertisement;
 import io.teamchallenge.project.bazario.entity.User;
+import io.teamchallenge.project.bazario.exceptions.AdvertisementNotFoundException;
 import io.teamchallenge.project.bazario.helpers.CloudinaryHelper;
 import io.teamchallenge.project.bazario.repository.AdvPictureRepository;
 import io.teamchallenge.project.bazario.repository.AdvertisementRepository;
@@ -87,8 +88,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Transactional
     public Advertisement addPictures(Long advertisementId, List<MultipartFile> pics, User user) {
         final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format("Advertisement with id %d not found", advertisementId)));
+                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
 
         final var pictures = new ArrayList<AdvPicture>();
         for (MultipartFile pic : pics) {
@@ -115,8 +115,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Transactional
     public Advertisement deletePicture(Long advertisementId, Long pictureId, User user) {
         final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format("Advertisement with id %d not found", advertisementId)));
+                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
 
         if (advertisement.getPictures() == null) {
             throw new EntityNotFoundException(String.format("Picture with id %d not found", pictureId));
@@ -171,13 +170,12 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Override
     public Advertisement getById(Long advId, User user) {
         final var advertisement = advertisementRepository.findById(advId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format("Advertisement with id %d not found", advId)));
+                .orElseThrow(() -> new AdvertisementNotFoundException(advId));
 
         // according to business logic only owner can see his own inactive advertisements
         if (!advertisement.isStatus()
             && (user == null || !Objects.equals(user.getId(), advertisement.getUser().getId()))) {
-            throw new EntityNotFoundException(String.format("Advertisement with id %d not found", advId));
+            throw new AdvertisementNotFoundException(advId);
         }
 
         return advertisement;
@@ -187,8 +185,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Transactional
     public Advertisement update(AdvertisementDto dto, User user) {
         final var advertisement = advertisementRepository.findByIdAndUser(dto.getId(), user)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format("Advertisement with id %d not found", dto.getId())));
+                .orElseThrow(() -> new AdvertisementNotFoundException(dto.getId()));
 
         if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
             advertisement.setTitle(dto.getTitle().trim());
@@ -213,8 +210,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     @Transactional
     public void delete(Long advertisementId, User user) {
         final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        String.format("Advertisement with id %d not found", advertisementId)));
+                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
 
         // 1. delete all associated pictures
         final var advPictures = advertisement.getPictures();

@@ -1,6 +1,7 @@
 package io.teamchallenge.project.bazario.web.controller;
 
 import io.teamchallenge.project.bazario.entity.User;
+import io.teamchallenge.project.bazario.exceptions.AdvertisementNotFoundException;
 import io.teamchallenge.project.bazario.service.AdvertisementService;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
 import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
@@ -101,8 +102,8 @@ public class AdvertisementController {
         return ResponseEntity.ok().build();
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<Void> handleEntityNotFoundException(EntityNotFoundException ex) {
+    @ExceptionHandler({EntityNotFoundException.class, AdvertisementNotFoundException.class})
+    public ResponseEntity<Void> handleEntityNotFoundException(Exception ex) {
         log.debug(ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
