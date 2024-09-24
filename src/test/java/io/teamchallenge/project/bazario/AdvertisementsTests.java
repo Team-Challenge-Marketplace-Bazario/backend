@@ -2,10 +2,8 @@ package io.teamchallenge.project.bazario;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
-import io.teamchallenge.project.bazario.web.dto.LoginRequest;
-import io.teamchallenge.project.bazario.web.dto.LoginResponse;
-import io.teamchallenge.project.bazario.web.dto.RegisterRequest;
+import io.teamchallenge.project.bazario.web.dto.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,45 +15,27 @@ import org.springframework.web.reactive.function.BodyInserters;
 import java.util.Collections;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class BazarioApplicationTests {
+class AdvertisementsTests {
+
+    private static String user1Email;
+    private static String user2Email;
+    private static String password;
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @Test
-    void registerAndLoginUser() {
-        final var timeMillis = System.currentTimeMillis();
-        final var email = "user_" + timeMillis + "@server.com";
-        final var password = "111111";
-
-        final var registerRequest = new RegisterRequest("John", "Doe", "1234567890", email, password);
-
-        webTestClient.post()
-                .uri("/auth/register")
-                .bodyValue(registerRequest)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody().isEmpty();
-
-        final var loginRequest = new LoginRequest(email, password);
-
-        webTestClient.post()
-                .uri("/auth/login")
-                .bodyValue(loginRequest)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.refreshToken").isNotEmpty()
-                .jsonPath("$.accessToken").isNotEmpty();
+    @BeforeAll
+    static void setup() {
+        final var currentTime = System.currentTimeMillis();
+        user1Email = String.format("user1_%d@server.com", currentTime);
+        user2Email = String.format("user2_%d@server.com", currentTime);
+        password = "111111";
     }
 
     @Test
     void getAdvByIdTest() throws JsonProcessingException {
         // 0.1 register and save a user1's token
-        final var currentTime = System.currentTimeMillis();
-        final var user1Email = String.format("user1_%d@server.com", currentTime);
-        final var user2Email = String.format("user2_%d@server.com", currentTime);
-        final var password = "111111";
+
         var loginResponse1 = registerUserAndGetTokens(user1Email, password);
         var loginResponse2 = registerUserAndGetTokens(user2Email, password);
 
@@ -98,6 +78,60 @@ class BazarioApplicationTests {
         // 3.2 get inactive adv using no credential
         getAdvertisementById(inActiveAdvertisement.getId(), null)
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void updateAdvertisementTest() throws JsonProcessingException {
+        /// setup
+        // create two users
+        final var loginResponse1 = registerUserAndGetTokens(user1Email, password);
+        final var loginResponse2 = registerUserAndGetTokens(user2Email, password);
+
+        // create adv1 with user1
+        final var advertisement = createAdvertisement(new AdvertisementDto(null, "Adv title", "Adv description",
+                "123.45", true, Collections.emptyList(), null), loginResponse1.accessToken());
+
+        /// test
+        // update adv1 with user1 (should be success and fields must change accordingly)
+        webTestClient.put()
+                .uri("/adv/" + advertisement.getId())
+                .header("Authorization", "Bearer " + loginResponse1.accessToken())
+                .bodyValue(new AdvertisementDto(null, "updated title", "updated description", "234.56",
+                        false, Collections.emptyList(), null))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.id").isEqualTo(advertisement.getId())
+                .jsonPath("$.title").isEqualTo("updated title")
+                .jsonPath("$.description").isEqualTo("updated description")
+                .jsonPath("$.price").isEqualTo("234.56")
+                .jsonPath("$.status").isEqualTo(false);
+
+        // update no existing adv with user1 (should be not found)
+        webTestClient.put()
+                .uri("/adv/" + 1_000_000_000)
+                .header("Authorization", "Bearer " + loginResponse1.accessToken())
+                .bodyValue(new AdvertisementDto(null, "updated title 2", "updated description 2", "234.56",
+                        false, Collections.emptyList(), null))
+                .exchange()
+                .expectStatus().isNotFound();
+
+        // update adv1 with user2 (should be not found)
+        webTestClient.put()
+                .uri("/adv/" + advertisement.getId())
+                .header("Authorization", "Bearer " + loginResponse2.accessToken())
+                .bodyValue(new AdvertisementDto(null, "updated title", "updated description", "234.56",
+                        false, Collections.emptyList(), null))
+                .exchange()
+                .expectStatus().isNotFound();
+
+        // update adv with no user (should be unauthorized)
+        webTestClient.put()
+                .uri("/adv/" + advertisement.getId())
+                .bodyValue(new AdvertisementDto(null, "updated title", "updated description", "234.56",
+                        false, Collections.emptyList(), null))
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 
     private LoginResponse registerUserAndGetTokens(String email, String password) {

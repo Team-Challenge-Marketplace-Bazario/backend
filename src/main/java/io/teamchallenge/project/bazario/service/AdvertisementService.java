@@ -21,4 +21,6 @@ public interface AdvertisementService {
     PageRequest getPageRequest(Integer page, Integer itemsPerPage, List<String> sort);
 
     Advertisement getById(Long advId, User user);
+
+    Advertisement update(AdvertisementDto dto, User user);
 }

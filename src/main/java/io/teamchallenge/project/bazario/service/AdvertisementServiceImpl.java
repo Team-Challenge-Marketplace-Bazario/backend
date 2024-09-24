@@ -180,6 +180,32 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         return advertisement;
     }
 
+    @Override
+    @Transactional
+    public Advertisement update(AdvertisementDto dto, User user) {
+        final var advertisement = advertisementRepository.findByIdAndUser(dto.getId(), user)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Advertisement with id %d not found", dto.getId())));
+
+        if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
+            advertisement.setTitle(dto.getTitle().trim());
+        }
+        if (dto.getDescription() != null && !dto.getDescription().isBlank()) {
+            advertisement.setDescription(dto.getDescription().trim());
+        }
+
+        if (dto.getStatus() != null) {
+            advertisement.setStatus(dto.getStatus());
+        }
+
+        if (dto.getPrice() != null && !dto.getPrice().isBlank()
+            && dto.getPrice().trim().matches("^\\d{1,8}(\\.\\d{1,2})?$")) {
+            advertisement.setPrice(new BigDecimal(dto.getPrice().trim()));
+        }
+
+        return advertisementRepository.save(advertisement);
+    }
+
     private Sort getSort(List<String> sortFields) {
 
         if (sortFields == null || sortFields.size() < 2 || sortFields.size() % 2 != 0) {

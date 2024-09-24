@@ -80,6 +80,18 @@ public class AdvertisementController {
         return ResponseEntity.ok(new AdvertisementDto(advertisement));
     }
 
+    @PutMapping("/{advId}")
+    public ResponseEntity<AdvertisementDto> updateAdvertisement(@PathVariable("advId") Long advId,
+                                                                @RequestBody AdvertisementDto dto,
+                                                                @AuthenticationPrincipal User user) {
+
+        dto.setId(advId);
+
+        final var updatedAdvertisement = advService.update(dto, user);
+
+        return ResponseEntity.ok(new AdvertisementDto(updatedAdvertisement));
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Void> handleEntityNotFoundException(EntityNotFoundException ex) {
         log.debug(ex.getMessage());
