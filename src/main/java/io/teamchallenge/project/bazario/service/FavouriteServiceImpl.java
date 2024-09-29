@@ -66,6 +66,10 @@ public class FavouriteServiceImpl implements FavouriteService {
         final var favourite = favouriteRepository.findByAdvertisementIdAndUser(advId, user)
                 .orElseThrow(() -> new AdvertisementNotFoundException(advId));
 
+        if (!isActiveOrOwner(favourite.getAdvertisement(), user)) {
+            throw new AdvertisementNotFoundException(advId);
+        }
+
         favouriteRepository.delete(favourite);
     }
 

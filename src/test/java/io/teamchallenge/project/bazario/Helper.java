@@ -73,10 +73,38 @@ public interface Helper {
     static List<AdvertisementDto> getFavList(WebTestClient webTestClient, String token) {
         return webTestClient.get()
                 .uri("/fav")
-                .header("Authorization", "Bearer " + token)
+                .headers(header -> {
+                    if (token != null) {
+                        header.set("Authorization", "Bearer " + token);
+                    }
+                })
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(AdvertisementDto.class)
                 .returnResult().getResponseBody();
+    }
+
+    static WebTestClient.ResponseSpec addToFavList(WebTestClient webTestClient, AdvertisementDto advertisement, String token) {
+        return webTestClient.post()
+                .uri("/fav/" + advertisement.getId())
+                .headers(header -> {
+                    if (token != null) {
+                        header.set("Authorization", "Bearer " + token);
+                    }
+                })
+                .exchange();
+    }
+
+    static WebTestClient.ResponseSpec deleteFromFavList(WebTestClient webTestClient,
+                                                        AdvertisementDto advertisement,
+                                                        String token) {
+        return webTestClient.delete()
+                .uri("/fav/" + advertisement.getId())
+                .headers(header -> {
+                    if (token != null) {
+                        header.set("Authorization", "Bearer " + token);
+                    }
+                })
+                .exchange();
     }
 }
