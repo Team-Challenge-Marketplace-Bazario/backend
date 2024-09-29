@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -82,5 +83,15 @@ public class AdvertisementDto {
         } catch (JsonProcessingException e) {
             throw new AppException("error processing json string", e);
         }
+    }
+
+    public static List<AdvertisementDto> toList(List<Advertisement> voList) {
+        if (voList == null || voList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return voList.stream()
+                .map(AdvertisementDto::new)
+                .toList();
     }
 }

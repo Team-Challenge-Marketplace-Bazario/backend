@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 @Setter
 @Getter
@@ -37,6 +39,9 @@ public class User implements UserDetails {
     @Column(name = "phone", nullable = false, length = 13)
     private String phone;
 
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    private List<Favourite> favourites;
+
     public User(Long id, String firstName, String lastName, String email, String password, String phone) {
         this.id = id;
         this.firstName = firstName;
@@ -61,4 +66,16 @@ public class User implements UserDetails {
         return password;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }
