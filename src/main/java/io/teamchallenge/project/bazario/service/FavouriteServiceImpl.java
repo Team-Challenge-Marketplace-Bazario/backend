@@ -31,7 +31,7 @@ public class FavouriteServiceImpl implements FavouriteService {
      */
     @Override
     public List<Advertisement> getAll(User user) {
-        final var favourites = user.getFavourites();
+        final var favourites = favouriteRepository.findAllByUser(user);
 
         return favourites.stream()
                 .map(Favourite::getAdvertisement)

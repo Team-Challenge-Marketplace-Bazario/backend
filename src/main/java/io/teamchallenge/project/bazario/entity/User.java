@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 @Setter
@@ -38,9 +37,6 @@ public class User implements UserDetails {
 
     @Column(name = "phone", nullable = false, length = 13)
     private String phone;
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
-    private List<Favourite> favourites;
 
     public User(Long id, String firstName, String lastName, String email, String password, String phone) {
         this.id = id;
