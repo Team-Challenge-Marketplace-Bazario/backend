@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -40,10 +41,18 @@ public class CommentServiceImpl implements CommentService {
         }
 
         final var savedComment = commentRepository.save(
-                new Comment(null, dto.description(), LocalDateTime.now(), user));
+                new Comment(null, dto.description(), LocalDateTime.now(), advertisement, user));
 
         log.debug("created comment {}", savedComment);
 
         return savedComment;
+    }
+
+    @Override
+    public List<Comment> getByAdvertisementId(Long advertisementId) {
+        final var advertisement = advertisementRepository.findById(advertisementId)
+                .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
+
+        return commentRepository.findAllByAdvertisement(advertisement);
     }
 }

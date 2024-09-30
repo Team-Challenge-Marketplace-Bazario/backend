@@ -25,6 +25,10 @@ public class Comment {
     @Column(nullable = false)
     private LocalDateTime createDate;
 
+    @ManyToOne
+    @JoinColumn(name = "ADV_ID", nullable = false)
+    private Advertisement advertisement;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "USER_ID", nullable = false)
     private User user;

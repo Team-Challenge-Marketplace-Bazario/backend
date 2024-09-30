@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/comment")
@@ -31,6 +33,14 @@ public class CommentController {
         final var comment = commentService.add(advId, dto, user);
 
         return ResponseEntity.ok(new CommentDto(comment));
+    }
+
+
+    @GetMapping("/{advId}")
+    public ResponseEntity<List<CommentDto>> getAdvertisementComments(@PathVariable(name = "advId") Long advId) {
+        final var list = commentService.getByAdvertisementId(advId);
+
+        return ResponseEntity.ok(CommentDto.toList(list));
     }
 
     @ExceptionHandler(AdvertisementNotFoundException.class)
