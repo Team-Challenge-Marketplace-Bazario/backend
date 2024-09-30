@@ -79,6 +79,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 user
         ));
 
+        log.debug("created advertisement: {}", advertisement);
+
         // 3. save adv_pic objects
         for (AdvPicture advPicture : advPicsList) {
             advPicture.setAdvertisement(advertisement);
@@ -211,7 +213,10 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             advertisement.setPrice(new BigDecimal(dto.getPrice().trim()));
         }
 
-        return advertisementRepository.save(advertisement);
+        final var updatedAdvertisement = advertisementRepository.save(advertisement);
+        log.debug("updated advertisement: {}", updatedAdvertisement);
+
+        return updatedAdvertisement;
     }
 
     @Override

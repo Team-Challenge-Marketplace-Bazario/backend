@@ -32,7 +32,7 @@ public class CommentServiceImpl implements CommentService {
         final var advertisement = advertisementRepository.findById(advertisementId)
                 .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
 
-        if (Objects.equals(user.getId(), advertisement.getId())) {
+        if (Objects.equals(user.getId(), advertisement.getUser().getId())) {
             throw new IllegalOperationException("You cannot add comments to your own advertisement.");
         }
 
