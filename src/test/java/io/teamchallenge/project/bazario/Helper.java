@@ -2,10 +2,8 @@ package io.teamchallenge.project.bazario;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
-import io.teamchallenge.project.bazario.web.dto.LoginRequest;
-import io.teamchallenge.project.bazario.web.dto.LoginResponse;
-import io.teamchallenge.project.bazario.web.dto.RegisterRequest;
+import io.teamchallenge.project.bazario.web.controller.CreateCommentRequest;
+import io.teamchallenge.project.bazario.web.dto.*;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -127,6 +125,38 @@ public interface Helper {
                         header.set("Authorization", "Bearer " + token);
                     }
                 })
+                .exchange();
+    }
+
+    static WebTestClient.ResponseSpec addComment(WebTestClient webTestClient, AdvertisementDto adv,
+                                                 CreateCommentRequest commentRequest,
+                                                 String token) {
+
+        return webTestClient.post()
+                .uri("/comment/" + adv.getId())
+                .headers(header -> {
+                    if (token != null) {
+                        header.set("Authorization", "Bearer " + token);
+                    }
+                })
+                .bodyValue(commentRequest)
+                .exchange();
+    }
+
+    static List<CommentDto> getComments(WebTestClient webTestClient, AdvertisementDto adv) {
+
+        return webTestClient.get()
+                .uri("/comment/" + adv.getId())
+                .exchange()
+                .expectBodyList(CommentDto.class)
+                .returnResult()
+                .getResponseBody();
+    }
+
+    static WebTestClient.ResponseSpec getCommentsAsResponse(WebTestClient webTestClient, AdvertisementDto adv) {
+
+        return webTestClient.get()
+                .uri("/comment/" + adv.getId())
                 .exchange();
     }
 }

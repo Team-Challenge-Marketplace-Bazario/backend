@@ -7,6 +7,7 @@ import io.teamchallenge.project.bazario.exceptions.AdvertisementNotFoundExceptio
 import io.teamchallenge.project.bazario.helpers.CloudinaryHelper;
 import io.teamchallenge.project.bazario.repository.AdvPictureRepository;
 import io.teamchallenge.project.bazario.repository.AdvertisementRepository;
+import io.teamchallenge.project.bazario.repository.CommentRepository;
 import io.teamchallenge.project.bazario.repository.FavouriteRepository;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
 import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
@@ -36,15 +37,18 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     private final AdvertisementRepository advertisementRepository;
     private final AdvPictureRepository advPictureRepository;
     private final FavouriteRepository favouriteRepository;
+    private final CommentRepository commentRepository;
 
     public AdvertisementServiceImpl(CloudinaryHelper cloudinaryHelper,
                                     AdvertisementRepository advertisementRepository,
                                     AdvPictureRepository advPictureRepository,
-                                    FavouriteRepository favouriteRepository) {
+                                    FavouriteRepository favouriteRepository,
+                                    CommentRepository commentRepository) {
         this.cloudinaryHelper = cloudinaryHelper;
         this.advertisementRepository = advertisementRepository;
         this.advPictureRepository = advPictureRepository;
         this.favouriteRepository = favouriteRepository;
+        this.commentRepository = commentRepository;
     }
 
     @Override
@@ -228,7 +232,10 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         // 2. remove advertisement from fav lists
         favouriteRepository.deleteAllByAdvertisement(advertisement);
 
-        // 3. delete adv itself
+        // 3. remove advertisement's comments
+        commentRepository.deleteAllByAdvertisement(advertisement);
+
+        // 4. delete adv itself
         log.debug("removing advertisement: {}", advertisement);
         return advertisementRepository.deleteAdvertisementById(advertisement.getId()) == 1;
     }

@@ -76,4 +76,4 @@ application*.properties
 ehthumbs.db
 Thumbs.db
 
-.env
+.env*

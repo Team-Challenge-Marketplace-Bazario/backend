@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class CommentController {
 
     @PostMapping("/{advId}")
     public ResponseEntity<CommentDto> createComment(@PathVariable(name = "advId") Long advId,
-                                                    @Valid CreateCommentRequest dto,
+                                                    @Valid @RequestBody CreateCommentRequest dto,
                                                     @AuthenticationPrincipal User user) {
 
         final var comment = commentService.add(advId, dto, user);
@@ -49,7 +50,7 @@ public class CommentController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    @ExceptionHandler(IllegalOperationException.class)
+    @ExceptionHandler({IllegalOperationException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<Void> handleIllegalOperationException(Exception ex) {
         log.debug(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
