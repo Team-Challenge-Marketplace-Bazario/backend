@@ -39,4 +39,17 @@ public class Advertisement {
     @JoinColumn(name = "USER_ID")
     private User user;
 
+    @Override
+    public String toString() {
+        return "Advertisement{" +
+               "id=" + id +
+               ", title='" + title + '\'' +
+               ", description='" + description + '\'' +
+               ", pictures=" + pictures +
+               ", price=" + price +
+               ", status=" + status +
+               ", createDate=" + createDate +
+               ", user=" + user.getId() +
+               '}';
+    }
 }

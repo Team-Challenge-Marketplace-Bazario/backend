@@ -1,5 +1,6 @@
 package io.teamchallenge.project.bazario.repository;
 
+import io.teamchallenge.project.bazario.entity.Advertisement;
 import io.teamchallenge.project.bazario.entity.Favourite;
 import io.teamchallenge.project.bazario.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,6 @@ public interface FavouriteRepository extends JpaRepository<Favourite, Long> {
     Optional<Favourite> findByAdvertisementIdAndUser(Long advertisementId, User user);
 
     List<Favourite> findAllByUser(User user);
+
+    void deleteAllByAdvertisement(Advertisement advertisement);
 }

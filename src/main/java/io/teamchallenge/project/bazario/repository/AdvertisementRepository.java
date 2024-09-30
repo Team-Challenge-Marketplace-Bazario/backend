@@ -14,4 +14,6 @@ public interface AdvertisementRepository extends JpaRepository<Advertisement, Lo
     Optional<Advertisement> findByIdAndUser(Long advertisementId, User user);
 
     Page<Advertisement> findAllByTitleContainingAndStatus(String title, boolean status, Pageable pageRequest);
+
+    long deleteAdvertisementById(Long id);
 }

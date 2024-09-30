@@ -7,6 +7,7 @@ import io.teamchallenge.project.bazario.exceptions.AdvertisementNotFoundExceptio
 import io.teamchallenge.project.bazario.helpers.CloudinaryHelper;
 import io.teamchallenge.project.bazario.repository.AdvPictureRepository;
 import io.teamchallenge.project.bazario.repository.AdvertisementRepository;
+import io.teamchallenge.project.bazario.repository.FavouriteRepository;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
 import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,13 +35,16 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     private final CloudinaryHelper cloudinaryHelper;
     private final AdvertisementRepository advertisementRepository;
     private final AdvPictureRepository advPictureRepository;
+    private final FavouriteRepository favouriteRepository;
 
     public AdvertisementServiceImpl(CloudinaryHelper cloudinaryHelper,
                                     AdvertisementRepository advertisementRepository,
-                                    AdvPictureRepository advPictureRepository) {
+                                    AdvPictureRepository advPictureRepository,
+                                    FavouriteRepository favouriteRepository) {
         this.cloudinaryHelper = cloudinaryHelper;
         this.advertisementRepository = advertisementRepository;
         this.advPictureRepository = advPictureRepository;
+        this.favouriteRepository = favouriteRepository;
     }
 
     @Override
@@ -208,7 +212,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     @Transactional
-    public void delete(Long advertisementId, User user) {
+    public boolean delete(Long advertisementId, User user) {
         final var advertisement = advertisementRepository.findByIdAndUser(advertisementId, user)
                 .orElseThrow(() -> new AdvertisementNotFoundException(advertisementId));
 
@@ -221,8 +225,12 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             }
         }
 
-        // 2. delete adv itself
-        advertisementRepository.delete(advertisement);
+        // 2. remove advertisement from fav lists
+        favouriteRepository.deleteAllByAdvertisement(advertisement);
+
+        // 3. delete adv itself
+        log.debug("removing advertisement: {}", advertisement);
+        return advertisementRepository.deleteAdvertisementById(advertisement.getId()) == 1;
     }
 
     private Sort getSort(List<String> sortFields) {

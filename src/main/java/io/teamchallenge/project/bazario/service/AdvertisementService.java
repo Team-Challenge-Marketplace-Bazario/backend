@@ -24,5 +24,5 @@ public interface AdvertisementService {
 
     Advertisement update(AdvertisementDto dto, User user);
 
-    void delete(Long advertisementId, User user);
+    boolean delete(Long advertisementId, User user);
 }

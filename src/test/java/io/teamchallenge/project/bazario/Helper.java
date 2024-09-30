@@ -70,6 +70,28 @@ public interface Helper {
                 .getResponseBody().blockFirst();
     }
 
+    static WebTestClient.ResponseSpec getAdvertisementById(WebTestClient webTestClient, Long id, String token) {
+        return webTestClient.get()
+                .uri("/adv/" + id)
+                .headers(header -> {
+                    if (token != null) {
+                        header.add("Authorization", "Bearer " + token);
+                    }
+                })
+                .exchange();
+    }
+
+    static WebTestClient.ResponseSpec deleteAdvertisement(WebTestClient webTestClient, AdvertisementDto dto, String token) {
+        return webTestClient.delete()
+                .uri("/adv/" + dto.getId())
+                .headers(header -> {
+                    if (token != null) {
+                        header.add("Authorization", "Bearer " + token);
+                    }
+                })
+                .exchange();
+    }
+
     static List<AdvertisementDto> getFavList(WebTestClient webTestClient, String token) {
         return webTestClient.get()
                 .uri("/fav")

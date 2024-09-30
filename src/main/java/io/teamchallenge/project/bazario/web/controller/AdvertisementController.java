@@ -97,9 +97,9 @@ public class AdvertisementController {
     public ResponseEntity<Void> deleteAdvertisement(@PathVariable("advId") Long advId,
                                                     @AuthenticationPrincipal User user) {
 
-        advService.delete(advId, user);
+        final var result = advService.delete(advId, user);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(result ? HttpStatus.OK : HttpStatus.NOT_FOUND).build();
     }
 
     @ExceptionHandler({EntityNotFoundException.class, AdvertisementNotFoundException.class})
