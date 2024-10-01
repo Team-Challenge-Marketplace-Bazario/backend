@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.teamchallenge.project.bazario.web.controller.CreateCommentRequest;
 import io.teamchallenge.project.bazario.web.dto.*;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -161,6 +162,12 @@ public interface Helper {
     }
 
     static WebTestClient.ResponseSpec getAdvertisementByFilter(WebTestClient webTestClient, AdvertisementFilter filter) {
+        return getAdvertisementByFilter(webTestClient, filter, Collections.emptyList());
+    }
+
+    static WebTestClient.ResponseSpec getAdvertisementByFilter(WebTestClient webTestClient,
+                                                               AdvertisementFilter filter,
+                                                               List<Pair<String, String>> sorting) {
         return webTestClient.get()
                 .uri(builder -> {
                     builder.path("/adv");
@@ -173,10 +180,15 @@ public interface Helper {
                         }
                     }
 
+                    if (sorting != null && !sorting.isEmpty()) {
+                        sorting.forEach(entry -> builder.queryParam(entry.getFirst(), entry.getSecond()));
+                    }
+
                     builder.queryParam("ipp", 1000);
 
                     return builder.build();
                 }).exchange();
+
     }
 
     static AdvertisementDto getActiveAdvDtoWithTitleAndCategory(String title, String category) {

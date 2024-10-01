@@ -9,10 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.util.Pair;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -265,6 +267,56 @@ public class AdvertisementFiltersTest {
     }
 
     // test sorting by price asc and desc
+    @Test
+    void sortingByPriceTest() throws JsonProcessingException {
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
+                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "10.00", true, null, null),
+                tokens.accessToken());
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
+                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "20.00", true, null, null),
+                tokens.accessToken());
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
+                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "30.00", true, null, null),
+                tokens.accessToken());
+
+        // sort by price ascending
+        var advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, null, null),
+                List.of(Pair.of("sort", "price"), Pair.of("sort", "asc")))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().size() > 1);
+
+        for (int i = 1; i < advs.content().size(); i++) {
+            final var previous = advs.content().get(i - 1);
+            final var current = advs.content().get(i);
+
+            assertTrue(new BigDecimal(previous.getPrice()).compareTo(new BigDecimal(current.getPrice())) <= 0);
+        }
+
+        // sort by price descending
+        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, null, null),
+                List.of(Pair.of("sort", "price"), Pair.of("sort", "desc")))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().size() > 1);
+
+        for (int i = 1; i < advs.content().size(); i++) {
+            final var previous = advs.content().get(i - 1);
+            final var current = advs.content().get(i);
+
+            assertTrue(new BigDecimal(previous.getPrice()).compareTo(new BigDecimal(current.getPrice())) >= 0);
+        }
+    }
     // test sorting by date asc and desc
     // test sorting by price and date combined
 
