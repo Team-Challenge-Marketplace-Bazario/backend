@@ -176,4 +176,8 @@ public interface Helper {
                     return builder.build();
                 }).exchange();
     }
+
+    static AdvertisementDto getActiveDtoWithTitle(String title) {
+        return new AdvertisementDto(null, title, title, null, "123.45", true, null, null);
+    }
 }

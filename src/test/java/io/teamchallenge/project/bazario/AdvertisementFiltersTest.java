@@ -9,9 +9,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.util.List;
 import java.util.Set;
 
 import static io.teamchallenge.project.bazario.Helper.*;
@@ -19,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = {"file:.env_test_local"})
+@ActiveProfiles("test")
 public class AdvertisementFiltersTest {
 
     @Autowired
@@ -60,12 +63,12 @@ public class AdvertisementFiltersTest {
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
 
-        // make sure there are 3 adv
+        // make sure there are all ids here
         assertNotNull(advs);
-        assertEquals(3, advs.content().size());
         final var ids = Set.of(advWithoutCategory.getId(), advElectronics.getId(), advGarden.getId());
-        assertTrue(advs.content().stream()
-                .allMatch(_adv -> ids.contains(_adv.getId())));
+        assertEquals(ids.size(), advs.content().stream()
+                .filter(_adv -> ids.contains(_adv.getId()))
+                .count());
 
         // get all adv with filter category=electronics
         advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, Category.ELECTRONICS, null))
@@ -110,13 +113,105 @@ public class AdvertisementFiltersTest {
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
 
-        // make sure there are 3 adv with and without category
+        // make sure there are all adv that in ids
         assertNotNull(advs);
-        assertEquals(3, advs.content().size());
-        assertTrue(advs.content().stream().allMatch(adv -> ids.contains(adv.getId())));
+        assertEquals(ids.size(), advs.content().stream()
+                .filter(_adv -> ids.contains(_adv.getId()))
+                .count());
     }
 
     // test title filter
+    @Test
+    void titleFilterTest() throws JsonProcessingException {
+        // create user
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+
+        final var titles = List.of(
+                "Title keyword1 separated",
+                "Title prefixkeyword1suffix keyword inside other word",
+                "keyword1suffix title with keyword at the beginning",
+                "Title with keyword at the end keyword1",
+                "Title with keyword at the end keyWorD1",
+                "Title with keyword at the end keyword2",
+                "Plain Title"
+        );
+
+        for (String title : titles) {
+            createAdvertisement(webTestClient, getActiveDtoWithTitle(title), tokens.accessToken());
+        }
+
+        // get all adv with filter title=keyword1 (must be advs with keyword1 in title only)
+        var advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("keyword1", null, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword1")));
+
+        // get all adv with filter title=Keyword1 (must be advs with keyword1 without respect to case in title only)
+        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("KeyWord1", null, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword1")));
+
+
+        // get all adv with filter title=Keyword2
+        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("KeyWord2", null, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword2")));
+
+        // get all adv with filter title=nonExistingKeyword (must be 0 advs)
+        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("nonExistingKeyword", null, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().isEmpty());
+
+        /// national alphabet
+        final var nationalTitles = List.of("Заголовок ключовеСлово окремо",
+                "Заголовок ПрефіксключовеСловопостфікс ключове слово всередині",
+                "Ключовеслово заголовок спочатку",
+                "Заголовк з ключовим словом вкінці ключовеслово",
+                "Інший заголовок з Ключовим словом",
+                "Просто заголовок"
+        );
+
+        for (String title : nationalTitles) {
+            createAdvertisement(webTestClient, getActiveDtoWithTitle(title), tokens.accessToken());
+        }
+
+        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("ключовеСлово", null, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> adv.getTitle().toLowerCase().contains("ключовеслово")));
+
+        // get all adv with filter title=nonExistingKeyword (must be 0 advs)
+        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("nonExistingKeyword", null, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().isEmpty());
+    }
+
     // test title and category filters combined
 
     // test sorting by price asc and desc

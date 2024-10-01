@@ -12,6 +12,7 @@ public interface AdvertisementSpecifications {
     }
 
     static Specification<Advertisement> containsTitle(String title) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("title"), "%" + title + "%");
+        return (root, query, criteriaBuilder) -> criteriaBuilder.like(
+                criteriaBuilder.lower(root.get("title")), "%" + title.toLowerCase() + "%");
     }
 }
