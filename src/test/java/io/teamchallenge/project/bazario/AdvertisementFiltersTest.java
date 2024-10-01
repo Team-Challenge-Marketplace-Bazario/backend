@@ -321,6 +321,32 @@ public class AdvertisementFiltersTest {
     // test sorting by price and date combined
 
     // test that only active advs in response
+    @Test
+    void activeAdvTest() throws JsonProcessingException {
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+                Category.CLOTHES.name(), "123.45", true, null, null), tokens.accessToken());
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+                Category.CLOTHES.name(), "123.45", false, null, null), tokens.accessToken());
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+                null, "123.45", true, null, null), tokens.accessToken());
+
+        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+                null, "123.45", false, null, null), tokens.accessToken());
+
+        final var advs = getAdvertisementByFilter(webTestClient, null)
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(AdvertisementDto::getStatus));
+
+    }
 
     // test pagination
 }
