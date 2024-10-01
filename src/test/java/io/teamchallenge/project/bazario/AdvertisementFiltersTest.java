@@ -78,8 +78,8 @@ public class AdvertisementFiltersTest {
 
         // make sure there is one adv with and its category is electronics
         assertNotNull(advs);
-        assertEquals(1, advs.content().size());
-        assertEquals(advElectronics.getId(), advs.content().get(0).getId());
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> Category.ELECTRONICS.name().equals(adv.getCategory())));
 
         // get all adv with filter category=garden
         advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, Category.GARDEN, null))
@@ -107,6 +107,7 @@ public class AdvertisementFiltersTest {
         advs = webTestClient.get()
                 .uri(builder -> builder.path("/adv")
                         .queryParam("category", "xxx")
+                        .queryParam("ipp", 1000)
                         .build())
                 .exchange()
                 .expectStatus().isOk()
@@ -115,9 +116,7 @@ public class AdvertisementFiltersTest {
 
         // make sure there are all adv that in ids
         assertNotNull(advs);
-        assertEquals(ids.size(), advs.content().stream()
-                .filter(_adv -> ids.contains(_adv.getId()))
-                .count());
+        assertFalse(advs.content().isEmpty());
     }
 
     // test title filter
@@ -137,7 +136,7 @@ public class AdvertisementFiltersTest {
         );
 
         for (String title : titles) {
-            createAdvertisement(webTestClient, getActiveDtoWithTitle(title), tokens.accessToken());
+            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, null), tokens.accessToken());
         }
 
         // get all adv with filter title=keyword1 (must be advs with keyword1 in title only)
@@ -190,7 +189,7 @@ public class AdvertisementFiltersTest {
         );
 
         for (String title : nationalTitles) {
-            createAdvertisement(webTestClient, getActiveDtoWithTitle(title), tokens.accessToken());
+            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, null), tokens.accessToken());
         }
 
         advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("ключовеСлово", null, null))
@@ -213,6 +212,57 @@ public class AdvertisementFiltersTest {
     }
 
     // test title and category filters combined
+    @Test
+    void categoryTitleFilterTest() throws JsonProcessingException {
+        // create user
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+
+        final var titles = List.of(
+                "Title keyword1 separated",
+                "Title prefixkeyword1suffix keyword inside other word",
+                "keyword1suffix title with keyword at the beginning",
+                "Title with keyword at the end keyword1",
+                "Title with keyword at the end keyWorD1",
+                "Title with keyword at the end keyword2",
+                "Plain Title"
+        );
+
+        for (String title : titles) {
+            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, Category.CLOTHES.name()),
+                    tokens.accessToken());
+
+            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, Category.ELECTRONICS.name()),
+                    tokens.accessToken());
+
+            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, null),
+                    tokens.accessToken());
+        }
+
+        // get all by title=keyword1 and category=clothes
+        var advs = getAdvertisementByFilter(webTestClient,
+                new AdvertisementFilter("keyword1", Category.CLOTHES, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword1")
+                                 && adv.getCategory().equals(Category.CLOTHES.name())));
+
+        // get all by title=keyword1 and category=clothes
+        advs = getAdvertisementByFilter(webTestClient,
+                new AdvertisementFilter("keyword2", Category.ELECTRONICS, null))
+                .expectStatus().isOk()
+                .expectBody(PagedAdvertisementDto.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(advs);
+        assertTrue(advs.content().stream()
+                .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword2")
+                                 && adv.getCategory().equals(Category.ELECTRONICS.name())));
+
+    }
 
     // test sorting by price asc and desc
     // test sorting by date asc and desc

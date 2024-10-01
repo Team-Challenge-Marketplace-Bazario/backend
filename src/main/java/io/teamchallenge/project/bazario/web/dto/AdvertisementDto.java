@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.teamchallenge.project.bazario.entity.Advertisement;
 import io.teamchallenge.project.bazario.exceptions.AppException;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +14,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class AdvertisementDto {
 
     private static final String TITLE_FIELD = "title";
@@ -48,6 +46,7 @@ public class AdvertisementDto {
         this.id = vo.getId();
         this.title = vo.getTitle();
         this.description = vo.getDescription();
+        this.category = vo.getCategory() == null ? null : vo.getCategory().name();
         this.price = vo.getPrice().toString();
         this.status = vo.isStatus();
         this.createDate = vo.getCreateDate().toString();

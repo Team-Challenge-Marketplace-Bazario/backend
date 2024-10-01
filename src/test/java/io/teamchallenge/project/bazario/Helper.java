@@ -173,11 +173,13 @@ public interface Helper {
                         }
                     }
 
+                    builder.queryParam("ipp", 1000);
+
                     return builder.build();
                 }).exchange();
     }
 
-    static AdvertisementDto getActiveDtoWithTitle(String title) {
-        return new AdvertisementDto(null, title, title, null, "123.45", true, null, null);
+    static AdvertisementDto getActiveAdvDtoWithTitleAndCategory(String title, String category) {
+        return new AdvertisementDto(null, title, title, category, "123.45", true, null, null);
     }
 }
