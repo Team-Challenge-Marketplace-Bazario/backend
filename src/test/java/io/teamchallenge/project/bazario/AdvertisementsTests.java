@@ -43,12 +43,12 @@ class AdvertisementsTests {
 
         // 1.0 create active adv using user1's credentials
         final var activeAdvertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "getAdvByIdTest", "123.45", true, Collections.emptyList(), null),
+                new AdvertisementDto(null, "Adv title", "getAdvByIdTest", null, "123.45", true, Collections.emptyList(), null),
                 loginResponse1.accessToken());
 
         // 1.1 create inactive adv using user1's credentials
         final var inActiveAdvertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "getAdvByIdTest", "123.45", false, Collections.emptyList(), null),
+                new AdvertisementDto(null, "Adv title", "getAdvByIdTest", null, "123.45", false, Collections.emptyList(), null),
                 loginResponse1.accessToken());
 
         // 2.0 get active adv using user1's credential
@@ -93,7 +93,7 @@ class AdvertisementsTests {
 
         // create adv1 with user1
         final var advertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "updateAdvertisementTest",
+                new AdvertisementDto(null, "Adv title", "updateAdvertisementTest", null,
                         "123.45", true, Collections.emptyList(), null), loginResponse1.accessToken());
 
         /// test
@@ -101,8 +101,8 @@ class AdvertisementsTests {
         webTestClient.put()
                 .uri("/adv/" + advertisement.getId())
                 .header("Authorization", "Bearer " + loginResponse1.accessToken())
-                .bodyValue(new AdvertisementDto(null, "updated title", "updated updateAdvertisementTest", "234.56",
-                        false, Collections.emptyList(), null))
+                .bodyValue(new AdvertisementDto(null, "updated title", "updated updateAdvertisementTest", null,
+                        "234.56", false, Collections.emptyList(), null))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
@@ -116,8 +116,8 @@ class AdvertisementsTests {
         webTestClient.put()
                 .uri("/adv/" + 1_000_000_000)
                 .header("Authorization", "Bearer " + loginResponse1.accessToken())
-                .bodyValue(new AdvertisementDto(null, "updated title 2", "updated updateAdvertisementTest 2", "234.56",
-                        false, Collections.emptyList(), null))
+                .bodyValue(new AdvertisementDto(null, "updated title 2", "updated updateAdvertisementTest 2", null,
+                        "234.56", false, Collections.emptyList(), null))
                 .exchange()
                 .expectStatus().isNotFound();
 
@@ -125,16 +125,16 @@ class AdvertisementsTests {
         webTestClient.put()
                 .uri("/adv/" + advertisement.getId())
                 .header("Authorization", "Bearer " + loginResponse2.accessToken())
-                .bodyValue(new AdvertisementDto(null, "updated title", "updated updateAdvertisementTest", "234.56",
-                        false, Collections.emptyList(), null))
+                .bodyValue(new AdvertisementDto(null, "updated title", "updated updateAdvertisementTest", null,
+                        "234.56", false, Collections.emptyList(), null))
                 .exchange()
                 .expectStatus().isNotFound();
 
         // update adv with no user (should be unauthorized)
         webTestClient.put()
                 .uri("/adv/" + advertisement.getId())
-                .bodyValue(new AdvertisementDto(null, "updated title", "updated updateAdvertisementTest", "234.56",
-                        false, Collections.emptyList(), null))
+                .bodyValue(new AdvertisementDto(null, "updated title", "updated updateAdvertisementTest", null,
+                        "234.56", false, Collections.emptyList(), null))
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
@@ -149,7 +149,7 @@ class AdvertisementsTests {
         /// test
         // create advertisement adv 1 without picture with user1
         final var activeAdvertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "Adv deleteAdvertisementWithoutPicturesTest",
+                new AdvertisementDto(null, "Adv title", "Adv deleteAdvertisementWithoutPicturesTest", null,
                         "123.45", true, Collections.emptyList(), null), loginResponse1.accessToken());
 
         // delete adv1 with user2 (should be not found)
@@ -180,7 +180,7 @@ class AdvertisementsTests {
         // create advertisement adv2 with 2 pictures with user2
         final var advertisement = createAdvertisement(webTestClient,
                 new AdvertisementDto(null, "Adv title with pics",
-                        "deleteAdvertisementWithPicturesTest", "123.45", true, Collections.emptyList(), null),
+                        "deleteAdvertisementWithPicturesTest", null, "123.45", true, Collections.emptyList(), null),
                 loginResponse2.accessToken());
 
         final var advertisementResult = createAdvertisement(webTestClient, advertisement,
@@ -211,12 +211,12 @@ class AdvertisementsTests {
 
         // create adv1 as user1 and adv2 as user2
         final var adv1 = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv1 title", "deleteAdvertisementAddedToFavList 1", "123.45", true,
+                new AdvertisementDto(null, "Adv1 title", "deleteAdvertisementAddedToFavList 1", null, "123.45", true,
                         Collections.emptyList(), null),
                 loginResponse1.accessToken());
 
         final var adv2 = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv2 title", "deleteAdvertisementAddedToFavList 2", "123.45", true,
+                new AdvertisementDto(null, "Adv2 title", "deleteAdvertisementAddedToFavList 2", null, "123.45", true,
                         Collections.emptyList(), null),
                 loginResponse2.accessToken());
 

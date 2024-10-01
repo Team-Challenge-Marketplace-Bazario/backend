@@ -1,8 +1,6 @@
 package io.teamchallenge.project.bazario.service;
 
-import io.teamchallenge.project.bazario.entity.AdvPicture;
-import io.teamchallenge.project.bazario.entity.Advertisement;
-import io.teamchallenge.project.bazario.entity.User;
+import io.teamchallenge.project.bazario.entity.*;
 import io.teamchallenge.project.bazario.exceptions.AdvertisementNotFoundException;
 import io.teamchallenge.project.bazario.helpers.CloudinaryHelper;
 import io.teamchallenge.project.bazario.repository.AdvPictureRepository;
@@ -10,6 +8,7 @@ import io.teamchallenge.project.bazario.repository.AdvertisementRepository;
 import io.teamchallenge.project.bazario.repository.CommentRepository;
 import io.teamchallenge.project.bazario.repository.FavouriteRepository;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
+import io.teamchallenge.project.bazario.web.dto.AdvertisementFilter;
 import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -17,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -72,6 +72,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 null,
                 dto.getTitle(),
                 dto.getDescription(),
+                getCategory(dto.getCategory()),
                 Collections.emptyList(),
                 new BigDecimal(dto.getPrice()),
                 dto.getStatus(),
@@ -148,8 +149,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
-    public PagedAdvertisementDto getAllByFilter(String title, boolean status, PageRequest pageRequest) {
-        final var pagedList = advertisementRepository.findAllByTitleContainingAndStatus(title, status, pageRequest);
+    public PagedAdvertisementDto getAllByFilter(AdvertisementFilter filter, PageRequest pageRequest) {
+        final var pagedList = advertisementRepository.findAll(getSpecificationByFilter(filter), pageRequest);
 
         final var dtoList = pagedList.getContent().stream()
                 .map(AdvertisementDto::new)
@@ -245,6 +246,11 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         return advertisementRepository.deleteAdvertisementById(advertisement.getId()) == 1;
     }
 
+    @Override
+    public AdvertisementFilter getFilter(String title, String category, Boolean status) {
+        return new AdvertisementFilter(title, getCategory(category), status);
+    }
+
     private Sort getSort(List<String> sortFields) {
 
         if (sortFields == null || sortFields.size() < 2 || sortFields.size() % 2 != 0) {
@@ -277,5 +283,37 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     private Sort.Direction getSortDirection(String direction) {
         return "desc".equals(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+    }
+
+    private Category getCategory(String category) {
+        if (category == null) {
+            return null;
+        }
+
+        try {
+            return Category.valueOf(category.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Category unknown: {}", category);
+        }
+
+        return null;
+    }
+
+    private Specification<Advertisement> getSpecificationByFilter(AdvertisementFilter filter) {
+        var specs = Specification.<Advertisement>where(null);
+
+        if (filter.title() != null && !filter.title().isEmpty()) {
+            specs = specs.and(AdvertisementSpecifications.containsTitle(filter.title()));
+        }
+
+        if (filter.category() != null) {
+            specs = specs.and(AdvertisementSpecifications.hasCategory(filter.category()));
+        }
+
+        if (filter.status() != null) {
+            specs = specs.and(AdvertisementSpecifications.hasStatus(filter.status()));
+        }
+
+        return specs;
     }
 }

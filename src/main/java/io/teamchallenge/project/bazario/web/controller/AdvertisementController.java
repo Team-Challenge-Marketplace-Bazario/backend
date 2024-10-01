@@ -58,17 +58,16 @@ public class AdvertisementController {
     @GetMapping
     public ResponseEntity<PagedAdvertisementDto> getAllActiveAdvertisements(
             @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "category", required = false) String category,
             @RequestParam(name = "sort", required = false) List<String> sort,
             @RequestParam(name = "page", required = false) Integer page,
             @RequestParam(name = "ipp", required = false) Integer itemsPerPage) {
 
         final var pageRequest = advService.getPageRequest(page, itemsPerPage, sort);
 
-        if (title == null) {
-            title = "";
-        }
+        final var filter = advService.getFilter(title, category, true);
 
-        final var pagedDto = advService.getAllByFilter(title, true, pageRequest);
+        final var pagedDto = advService.getAllByFilter(filter, pageRequest);
 
         return ResponseEntity.ok(pagedDto);
     }

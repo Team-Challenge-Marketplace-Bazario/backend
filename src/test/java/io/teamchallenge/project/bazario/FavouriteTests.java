@@ -36,10 +36,10 @@ public class FavouriteTests {
         password = "111111";
 
         adv1 = new AdvertisementDto(
-                null, "Title User1", "Description User1", "123.45", true, Collections.emptyList(), null);
+                null, "Title User1", "Description User1", null, "123.45", true, Collections.emptyList(), null);
 
         adv2 = new AdvertisementDto(
-                null, "Title User2", "Description User2", "67.89", true, Collections.emptyList(), null);
+                null, "Title User2", "Description User2", null, "67.89", true, Collections.emptyList(), null);
     }
 
     @Test
@@ -79,7 +79,7 @@ public class FavouriteTests {
 
         // make adv1 inactive by user1
         var updatedAdv1 = Helper.updateAdvertisement(webTestClient, new AdvertisementDto(
-                        advertisement1.getId(), null, null, null, false, Collections.emptyList(), null),
+                        advertisement1.getId(), null, null, null, null, false, Collections.emptyList(), null),
                 loginResponse1.accessToken());
 
         assertFalse(updatedAdv1.getStatus());
@@ -96,7 +96,7 @@ public class FavouriteTests {
 
         // make adv2 inactive by user2
         var updatedAdv2 = Helper.updateAdvertisement(webTestClient, new AdvertisementDto(
-                        advertisement2.getId(), null, null, null, false, Collections.emptyList(), null),
+                        advertisement2.getId(), null, null, null, null, false, Collections.emptyList(), null),
                 loginResponse2.accessToken());
 
         assertFalse(updatedAdv2.getStatus());
@@ -184,7 +184,7 @@ public class FavouriteTests {
 
         // make adv2 inactive as user2
         updateAdvertisement(webTestClient,
-                new AdvertisementDto(advertisement2.getId(), null, null, null, false, Collections.emptyList(), null),
+                new AdvertisementDto(advertisement2.getId(), null, null, null, null, false, Collections.emptyList(), null),
                 loginResponse2.accessToken());
 
         // get fav list as user1 and make sure that there are no any advs
@@ -197,7 +197,7 @@ public class FavouriteTests {
 
         // make adv2 active as user2
         updateAdvertisement(webTestClient,
-                new AdvertisementDto(advertisement2.getId(), null, null, null, true, Collections.emptyList(), null),
+                new AdvertisementDto(advertisement2.getId(), null, null, null, null, true, Collections.emptyList(), null),
                 loginResponse2.accessToken());
 
         // get fav list as user1 and make sure that adv2 is there

@@ -36,7 +36,7 @@ public class CommentTests {
         password = "111111";
 
         advDto1 = new AdvertisementDto(
-                null, "Title User1", "Description User1", "123.45", true, Collections.emptyList(), null);
+                null, "Title User1", "Description User1", null, "123.45", true, Collections.emptyList(), null);
     }
 
     @Test
@@ -62,7 +62,7 @@ public class CommentTests {
 
         // make adv1 inactive
         var updatedAdv1 = updateAdvertisement(webTestClient,
-                new AdvertisementDto(adv1.getId(), null, null, null, false, Collections.emptyList(), null),
+                new AdvertisementDto(adv1.getId(), null, null, null, null, false, Collections.emptyList(), null),
                 login1.accessToken());
 
         assertFalse(updatedAdv1.getStatus());
@@ -73,7 +73,7 @@ public class CommentTests {
 
         // make adv1 active
         updatedAdv1 = updateAdvertisement(webTestClient,
-                new AdvertisementDto(adv1.getId(), null, null, null, true, Collections.emptyList(), null),
+                new AdvertisementDto(adv1.getId(), null, null, null, null, true, Collections.emptyList(), null),
                 login1.accessToken());
 
         assertTrue(updatedAdv1.getStatus());

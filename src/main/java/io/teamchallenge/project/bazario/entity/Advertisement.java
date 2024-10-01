@@ -26,6 +26,9 @@ public class Advertisement {
 
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    private Category category;
+
     @OneToMany(mappedBy = "advertisement", fetch = FetchType.EAGER)
     private List<AdvPicture> pictures;
 

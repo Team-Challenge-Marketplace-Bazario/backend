@@ -3,6 +3,7 @@ package io.teamchallenge.project.bazario.service;
 import io.teamchallenge.project.bazario.entity.Advertisement;
 import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.web.dto.AdvertisementDto;
+import io.teamchallenge.project.bazario.web.dto.AdvertisementFilter;
 import io.teamchallenge.project.bazario.web.dto.PagedAdvertisementDto;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,7 +17,7 @@ public interface AdvertisementService {
 
     Advertisement deletePicture(Long advertisementId, Long pictureId, User user);
 
-    PagedAdvertisementDto getAllByFilter(String title, boolean status, PageRequest pageRequest);
+    PagedAdvertisementDto getAllByFilter(AdvertisementFilter filter, PageRequest pageRequest);
 
     PageRequest getPageRequest(Integer page, Integer itemsPerPage, List<String> sort);
 
@@ -25,4 +26,6 @@ public interface AdvertisementService {
     Advertisement update(AdvertisementDto dto, User user);
 
     boolean delete(Long advertisementId, User user);
+
+    AdvertisementFilter getFilter(String title, String category, Boolean status);
 }

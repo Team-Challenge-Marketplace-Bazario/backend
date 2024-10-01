@@ -21,6 +21,7 @@ public class AdvertisementDto {
 
     private static final String TITLE_FIELD = "title";
     private static final String DESCRIPTION_FIELD = "description";
+    private static final String CATEGORY_FIELD = "category";
     private static final String PRICE_FIELD = "price";
     private static final String STATUS_FIELD = "status";
 
@@ -31,6 +32,8 @@ public class AdvertisementDto {
 
     @NotBlank
     private String description;
+
+    private String category;
 
     @NotBlank
     private String price;
@@ -68,6 +71,10 @@ public class AdvertisementDto {
 
             if (node.has(DESCRIPTION_FIELD)) {
                 this.description = node.get(DESCRIPTION_FIELD).asText().trim();
+            }
+
+            if (node.has(CATEGORY_FIELD)) {
+                this.category = node.get(CATEGORY_FIELD).asText().trim();
             }
 
             if (node.has(PRICE_FIELD)) {
