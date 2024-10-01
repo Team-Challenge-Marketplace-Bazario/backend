@@ -159,4 +159,21 @@ public interface Helper {
                 .uri("/comment/" + adv.getId())
                 .exchange();
     }
+
+    static WebTestClient.ResponseSpec getAdvertisementByFilter(WebTestClient webTestClient, AdvertisementFilter filter) {
+        return webTestClient.get()
+                .uri(builder -> {
+                    builder.path("/adv");
+                    if (filter != null) {
+                        if (filter.title() != null) {
+                            builder.queryParam("title", filter.title());
+                        }
+                        if (filter.category() != null) {
+                            builder.queryParam("category", filter.category());
+                        }
+                    }
+
+                    return builder.build();
+                }).exchange();
+    }
 }

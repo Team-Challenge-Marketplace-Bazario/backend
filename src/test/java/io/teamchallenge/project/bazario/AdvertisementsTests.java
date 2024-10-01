@@ -35,6 +35,19 @@ class AdvertisementsTests {
     }
 
     @Test
+    void addAdvTest() {
+        //todo: add advertisement test (with and without pictures, with and without category)
+
+        /// add adv with picture
+
+        /// add adv without picture
+
+        /// add adv with category
+
+        /// add adv without category
+    }
+
+    @Test
     void getAdvByIdTest() throws JsonProcessingException {
         // 0.1 register and save a user1's token
 

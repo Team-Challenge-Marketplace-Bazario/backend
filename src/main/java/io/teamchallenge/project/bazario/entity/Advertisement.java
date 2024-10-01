@@ -27,6 +27,7 @@ public class Advertisement {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "category", length = 50)
     private Category category;
 
     @OneToMany(mappedBy = "advertisement", fetch = FetchType.EAGER)
@@ -48,6 +49,7 @@ public class Advertisement {
                "id=" + id +
                ", title='" + title + '\'' +
                ", description='" + description + '\'' +
+               ", category=" + category +
                ", pictures=" + pictures +
                ", price=" + price +
                ", status=" + status +
