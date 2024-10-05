@@ -24,13 +24,28 @@ public class EMailHelper {
 
         mailMessage.setTo(user.getEmail());
         mailMessage.setSubject("Email verification");
-        mailMessage.setText(getMessageBody(user.getEmailVerification()));
+        mailMessage.setText(getEmailVerificationMessageBody(user.getEmailVerification()));
 
         mailSender.send(mailMessage);
     }
 
-    private String getMessageBody(Verification verification) {
+    public void sendRestorePasswordEmail(User user) {
+        final var mailMessage = new SimpleMailMessage();
+
+        mailMessage.setTo(user.getEmail());
+        mailMessage.setSubject("Password restore");
+        mailMessage.setText(geRestorePasswordMessageBody(user.getPasswordVerification()));
+
+        mailSender.send(mailMessage);
+    }
+
+    private String getEmailVerificationMessageBody(Verification verification) {
         final var link = String.format("%s/verify-email?token=%s", frontendUrl, verification.getToken());
         return String.format("Click the following link to verify your email address: %s", link);
+    }
+
+    private String geRestorePasswordMessageBody(Verification verification) {
+        final var link = String.format("%s/restore-password?token=%s", frontendUrl, verification.getToken());
+        return String.format("Click the following link to start password restoration: %s", link);
     }
 }

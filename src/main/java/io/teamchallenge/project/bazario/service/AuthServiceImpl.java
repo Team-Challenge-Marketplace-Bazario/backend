@@ -5,6 +5,7 @@ import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.entity.Verification;
 import io.teamchallenge.project.bazario.exceptions.IllegalOperationException;
 import io.teamchallenge.project.bazario.exceptions.JwtException;
+import io.teamchallenge.project.bazario.exceptions.UserNotFoundException;
 import io.teamchallenge.project.bazario.helpers.EMailHelper;
 import io.teamchallenge.project.bazario.repository.UserRepository;
 import io.teamchallenge.project.bazario.web.dto.*;
@@ -139,9 +140,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void sendVerifyEmail(UsernameRequest request) {
-        final Function<String, Optional<User>> getUser = request.username().contains("@")
-                ? userRepository::findByEmail
-                : userRepository::findByPhone;
+        final var getUser = getUser(request);
 
         final var user = getUser.apply(request.username())
                 .orElseThrow(() -> new UsernameNotFoundException(
@@ -164,16 +163,79 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
+    public void restorePassword(VerifyPasswordRequest request) {
+        // find user
+        final var user = userRepository.findByPasswordVerificationToken(request.token())
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        String.format("User with password restore token %s not found", request.token())));
+
+        // check active
+        if (!user.isVerified()) {
+            throw new IllegalOperationException(
+                    String.format("User %s is not verified", user.getEmail())
+            );
+        }
+
+        // check expire
+        if (user.getPasswordVerification().getExpires().isBefore(LocalDateTime.now())) {
+            throw new IllegalOperationException(
+                    String.format("Password verification token has expired, due date is: %s",
+                            user.getPasswordVerification().getExpires()));
+        }
+
+        // remove token from db
+        user.setPasswordVerification(null);
+        user.setPassword(passwordEncoder.encode(request.password()));
+
+        // update password and save
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void sendRestorePasswordEmail(UsernameRequest request) {
+        // find user
+        final var user = getUser(request).apply(request.username())
+                .orElseThrow(() -> new UserNotFoundException(
+                        String.format("User %s not found", request.username())));
+
+        // check if non active
+        if (!user.isVerified()) {
+            log.warn("User with username: {} is not verified", user.getEmail());
+            return;
+        }
+
+        // check if token present and expired
+        if (user.getPasswordVerification() != null
+            && user.getPasswordVerification().getExpires().isAfter(LocalDateTime.now())) {
+            log.warn("last restore password letter duration expires at {}", user.getPasswordVerification().getExpires());
+            return;
+        }
+
+        user.setPasswordVerification(getVerification(verificationDuration));
+        final var updatedUser = userRepository.save(user);
+
+        eMailHelper.sendRestorePasswordEmail(updatedUser);
+    }
+
+    @Override
     public boolean logout(User user) {
         return refreshTokenService.deleteByUser(user) > 0;
     }
 
     private Verification getVerification(long verificationDuration) {
-        final var byteToken = new byte[16];
+        final var byteToken = new byte[32];
 
         new SecureRandom().nextBytes(byteToken);
         final var stringToken = Base64.getUrlEncoder().encodeToString(byteToken);
 
         return new Verification(stringToken, LocalDateTime.now().plusSeconds(verificationDuration));
+    }
+
+    private Function<String, Optional<User>> getUser(UsernameRequest request) {
+        return request.username().contains("@")
+                ? userRepository::findByEmail
+                : userRepository::findByPhone;
     }
 }

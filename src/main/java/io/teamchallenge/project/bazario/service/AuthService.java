@@ -15,4 +15,8 @@ public interface AuthService {
     void verifyEmail(VerifyEmailRequest request);
 
     void sendVerifyEmail(UsernameRequest request);
+
+    void restorePassword(VerifyPasswordRequest request);
+
+    void sendRestorePasswordEmail(UsernameRequest request);
 }

@@ -54,8 +54,21 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    //todo: post /api/auth/send-restore-password   - send email to restore password
-    //todo: post /api/auth/verify-password  - get verification token with new password
+    @PostMapping("/restore-password")
+    public ResponseEntity<Void> restorePassword(@Valid @RequestBody VerifyPasswordRequest request) {
+
+        authService.restorePassword(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/send-restore-password")
+    public ResponseEntity<Void> sendRestorePassword(@Valid @RequestBody UsernameRequest request) {
+
+        authService.sendRestorePasswordEmail(request);
+
+        return ResponseEntity.ok().build();
+    }
 
     @GetMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal User user) {
