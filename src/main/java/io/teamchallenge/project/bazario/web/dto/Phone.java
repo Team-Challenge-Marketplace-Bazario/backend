@@ -1,6 +1,6 @@
 package io.teamchallenge.project.bazario.web.dto;
 
-import io.teamchallenge.project.bazario.helpers.EmailOrPhoneValidator;
+import io.teamchallenge.project.bazario.helpers.PhoneValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -11,9 +11,9 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = EmailOrPhoneValidator.class)
-public @interface EmailOrPhone {
-    String message() default "Field neither email or phone";
+@Constraint(validatedBy = PhoneValidator.class)
+public @interface Phone {
+    String message() default "Field phone not valid";
 
     Class<?>[] groups() default {};
 

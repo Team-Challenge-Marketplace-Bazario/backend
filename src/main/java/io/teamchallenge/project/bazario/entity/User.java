@@ -38,17 +38,36 @@ public class User implements UserDetails {
     @Column(name = "phone", nullable = false, unique = true, length = 13)
     private String phone;
 
-    private Verification verification;
+    @Column(nullable = false)
+    private boolean verified;
+
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "token", column = @Column(name = "EMAIL_TOKEN")),
+            @AttributeOverride(name = "expires", column = @Column(name = "EMAIL_TOKEN_EXPIRES",
+                    columnDefinition = "timestamp"))
+    })
+    private Verification emailVerification;
+
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "token", column = @Column(name = "PASSWORD_TOKEN")),
+            @AttributeOverride(name = "expires", column = @Column(name = "PASSWORD_TOKEN_EXPIRES",
+                    columnDefinition = "timestamp"))
+    })
+    private Verification passwordVerification;
 
     public User(Long id, String firstName, String lastName, String email, String password, String phone,
-                Verification verification) {
+                boolean verified, Verification emailVerification, Verification passwordVerification) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.phone = phone;
-        this.verification = verification;
+        this.verified = verified;
+        this.emailVerification = emailVerification;
+        this.passwordVerification = passwordVerification;
     }
 
     @Override
@@ -68,8 +87,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.verification != null
-               && this.verification.isVerified();
+        return verified;
     }
 
     @Override
@@ -93,6 +111,7 @@ public class User implements UserDetails {
                ", lastName='" + lastName + '\'' +
                ", email='" + email + '\'' +
                ", phone='" + phone + '\'' +
+               ", verified=" + verified +
                '}';
     }
 }

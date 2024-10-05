@@ -1,12 +1,12 @@
 package io.teamchallenge.project.bazario.helpers;
 
-import io.teamchallenge.project.bazario.web.dto.EmailOrPhone;
+import io.teamchallenge.project.bazario.web.dto.Phone;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class EmailOrPhoneValidator implements ConstraintValidator<EmailOrPhone, String> {
+public class PhoneValidator implements ConstraintValidator<Phone, String> {
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        return ValidatorHelper.isValidEmail(value) || ValidatorHelper.isValidPhone(value);
+        return ValidatorHelper.isValidPhone(value);
     }
 }

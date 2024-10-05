@@ -48,7 +48,7 @@ public class AuthController {
     }
 
     @PostMapping("/send-verify-email")
-    public ResponseEntity<Void> sendVerifyEmail(@Valid UsernameRequest request) {
+    public ResponseEntity<Void> sendVerifyEmail(@Valid @RequestBody UsernameRequest request) {
         authService.sendVerifyEmail(request);
 
         return ResponseEntity.ok().build();

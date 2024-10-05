@@ -24,7 +24,7 @@ public class EMailHelper {
 
         mailMessage.setTo(user.getEmail());
         mailMessage.setSubject("Email verification");
-        mailMessage.setText(getMessageBody(user.getVerification()));
+        mailMessage.setText(getMessageBody(user.getEmailVerification()));
 
         mailSender.send(mailMessage);
     }

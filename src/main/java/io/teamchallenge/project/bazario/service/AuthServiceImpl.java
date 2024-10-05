@@ -58,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
                 new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
 
         final var user = ((User) authentication.getPrincipal());
-        if (!user.getVerification().isVerified()) {
+        if (!user.isVerified()) {
             throw new IllegalOperationException("User is not verified");
         }
 
@@ -82,10 +82,10 @@ public class AuthServiceImpl implements AuthService {
 
         final var encodedPassword = passwordEncoder.encode(registerRequest.password());
 
-        final var verificationToken = getVerificationToken(verificationDuration);
+        final var emailVerification = getVerification(verificationDuration);
 
         final var user = new User(null, registerRequest.firstName(), registerRequest.lastName(),
-                registerRequest.email(), encodedPassword, registerRequest.phone(), verificationToken);
+                registerRequest.email(), encodedPassword, registerRequest.phone(), false, emailVerification, null);
 
         final var savedUser = userRepository.save(user);
 
@@ -113,26 +113,25 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void verifyEmail(VerifyEmailRequest request) {
-        final var user = userRepository.findByVerificationToken(request.token())
+        final var user = userRepository.findByEmailVerificationToken(request.token())
                 .orElseThrow(() -> new RuntimeException(
                         String.format("User with verification token %s not found", request.token())));
 
-        if (user.getVerification().isVerified()) {
+        if (user.isVerified()) {
             throw new IllegalOperationException(
                     String.format("User %s is already verified", user)
             );
         }
 
-        if (user.getVerification().getExpires().isBefore(LocalDateTime.now())) {
+        if (user.getEmailVerification().getExpires().isBefore(LocalDateTime.now())) {
             throw new IllegalOperationException(
                     String.format("Email verification token has expired, due date is: %s",
-                            user.getVerification().getExpires())
+                            user.getEmailVerification().getExpires())
             );
         }
 
-        user.getVerification().setToken(null);
-        user.getVerification().setExpires(null);
-        user.getVerification().setVerified(true);
+        user.setEmailVerification(null);
+        user.setVerified(true);
 
         userRepository.save(user);
     }
@@ -148,17 +147,17 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException(
                         String.format("User %s not found", request.username())));
 
-        if (user.getVerification().isVerified()) {
+        if (user.isVerified()) {
             log.warn("User with username: {} is already verified", user.getEmail());
             return;
         }
 
-        if (user.getVerification().getExpires().isAfter(LocalDateTime.now())) {
-            log.warn("last letter duration expires at {}", user.getVerification().getExpires());
+        if (user.getEmailVerification().getExpires().isAfter(LocalDateTime.now())) {
+            log.warn("last letter duration expires at {}", user.getEmailVerification().getExpires());
             return;
         }
 
-        user.setVerification(getVerificationToken(verificationDuration));
+        user.setEmailVerification(getVerification(verificationDuration));
         final var updatedUser = userRepository.save(user);
 
         eMailHelper.sendVerificationEmail(updatedUser);
@@ -169,12 +168,12 @@ public class AuthServiceImpl implements AuthService {
         return refreshTokenService.deleteByUser(user) > 0;
     }
 
-    private Verification getVerificationToken(long verificationDuration) {
+    private Verification getVerification(long verificationDuration) {
         final var byteToken = new byte[16];
 
         new SecureRandom().nextBytes(byteToken);
         final var stringToken = Base64.getUrlEncoder().encodeToString(byteToken);
 
-        return new Verification(stringToken, false, LocalDateTime.now().plusSeconds(verificationDuration));
+        return new Verification(stringToken, LocalDateTime.now().plusSeconds(verificationDuration));
     }
 }
