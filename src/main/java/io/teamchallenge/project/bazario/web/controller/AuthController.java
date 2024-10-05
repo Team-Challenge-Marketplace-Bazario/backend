@@ -2,10 +2,7 @@ package io.teamchallenge.project.bazario.web.controller;
 
 import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.service.AuthService;
-import io.teamchallenge.project.bazario.web.dto.LoginRequest;
-import io.teamchallenge.project.bazario.web.dto.LoginResponse;
-import io.teamchallenge.project.bazario.web.dto.RefreshTokenRequest;
-import io.teamchallenge.project.bazario.web.dto.RegisterRequest;
+import io.teamchallenge.project.bazario.web.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +39,23 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/send-verify-email")
+    public ResponseEntity<Void> sendVerifyEmail(@Valid UsernameRequest request) {
+        authService.sendVerifyEmail(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    //todo: post /api/auth/send-restore-password   - send email to restore password
+    //todo: post /api/auth/verify-password  - get verification token with new password
 
     @GetMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal User user) {

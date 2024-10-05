@@ -35,16 +35,20 @@ public class User implements UserDetails {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "phone", nullable = false, length = 13)
+    @Column(name = "phone", nullable = false, unique = true, length = 13)
     private String phone;
 
-    public User(Long id, String firstName, String lastName, String email, String password, String phone) {
+    private Verification verification;
+
+    public User(Long id, String firstName, String lastName, String email, String password, String phone,
+                Verification verification) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.phone = phone;
+        this.verification = verification;
     }
 
     @Override
@@ -63,6 +67,12 @@ public class User implements UserDetails {
     }
 
     @Override
+    public boolean isEnabled() {
+        return this.verification != null
+               && this.verification.isVerified();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -73,5 +83,16 @@ public class User implements UserDetails {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+               "id=" + id +
+               ", firstName='" + firstName + '\'' +
+               ", lastName='" + lastName + '\'' +
+               ", email='" + email + '\'' +
+               ", phone='" + phone + '\'' +
+               '}';
     }
 }

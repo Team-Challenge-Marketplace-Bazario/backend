@@ -1,10 +1,7 @@
 package io.teamchallenge.project.bazario.service;
 
 import io.teamchallenge.project.bazario.entity.User;
-import io.teamchallenge.project.bazario.web.dto.LoginRequest;
-import io.teamchallenge.project.bazario.web.dto.LoginResponse;
-import io.teamchallenge.project.bazario.web.dto.RefreshTokenRequest;
-import io.teamchallenge.project.bazario.web.dto.RegisterRequest;
+import io.teamchallenge.project.bazario.web.dto.*;
 
 public interface AuthService {
     LoginResponse login(LoginRequest loginRequest);
@@ -14,4 +11,8 @@ public interface AuthService {
     LoginResponse refreshToken(RefreshTokenRequest request);
 
     boolean logout(User user);
+
+    void verifyEmail(VerifyEmailRequest request);
+
+    void sendVerifyEmail(UsernameRequest request);
 }

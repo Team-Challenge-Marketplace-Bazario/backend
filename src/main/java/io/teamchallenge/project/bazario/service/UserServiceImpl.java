@@ -21,8 +21,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        if (username != null && username.contains("@")) {
+            return findByEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+        } else {
+            return findByPhone(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with phone: " + username));
+        }
     }
 
     @Override
@@ -30,10 +35,9 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email);
     }
 
-    @Transactional
     @Override
-    public Optional<User> save(User user) {
-        return Optional.of(userRepository.save(user));
+    public Optional<User> findByPhone(String phone) {
+        return userRepository.findByPhone(phone);
     }
 
     @Transactional
