@@ -115,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void verifyEmail(VerifyEmailRequest request) {
         final var user = userRepository.findByEmailVerificationToken(request.token())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new UserNotFoundException(
                         String.format("User with verification token %s not found", request.token())));
 
         if (user.isVerified()) {
@@ -147,13 +147,13 @@ public class AuthServiceImpl implements AuthService {
                         String.format("User %s not found", request.username())));
 
         if (user.isVerified()) {
-            log.warn("User with username: {} is already verified", user.getEmail());
-            return;
+            throw new IllegalOperationException(
+                    String.format("User with username: %s is already verified", user.getEmail()));
         }
 
         if (user.getEmailVerification().getExpires().isAfter(LocalDateTime.now())) {
-            log.warn("last letter duration expires at {}", user.getEmailVerification().getExpires());
-            return;
+            throw new IllegalOperationException(
+                    String.format("last letter duration expires at %s", user.getEmailVerification().getExpires()));
         }
 
         user.setEmailVerification(getVerification(verificationDuration));
