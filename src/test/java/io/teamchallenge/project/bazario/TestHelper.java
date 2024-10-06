@@ -10,17 +10,40 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public interface TestHelper {
-    static LoginResponse registerUserAndGetTokens(WebTestClient webTestClient, String email, String password) {
-        final var registerRequest = new RegisterRequest("John", "Doe", "1234567890", email, password);
+
+    String MAIL_PIT_URL = "http://localhost:8025/api/v1/message/latest";
+
+    static LoginResponse registerUserAndGetTokens(WebTestClient webTestClient,
+                                                  String email, String phone, String password) {
+        final var registerRequest = new RegisterRequest("Johny", "Mnemonic", email, phone, password);
 
         webTestClient.post()
                 .uri("/auth/register")
                 .bodyValue(registerRequest)
                 .exchange();
+
+        // retrieve token
+        final var mailMessage = webTestClient.get()
+                .uri(URI.create(MAIL_PIT_URL))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(MailMessage.class)
+                .returnResult().getResponseBody();
+
+        final var elements = Objects.requireNonNull(mailMessage).Text().split("\\?token=");
+
+        // verify email
+        webTestClient.post()
+                .uri("/auth/verify-email")
+                .bodyValue(new VerifyEmailRequest(elements[1].trim()))
+                .exchange()
+                .expectStatus().isOk();
 
         final var loginRequest = new LoginRequest(email, password);
 

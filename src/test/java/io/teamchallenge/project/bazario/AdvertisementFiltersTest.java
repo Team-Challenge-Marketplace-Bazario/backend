@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.math.BigDecimal;
@@ -24,25 +25,28 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = {"file:.env_test_local"})
 @ActiveProfiles("test")
+@Sql("classpath:clean-db.sql")
 public class AdvertisementFiltersTest {
 
     @Autowired
     private WebTestClient webTestClient;
 
     private String user1Email;
+    private String user1Phone;
     private String password;
 
     @BeforeEach()
     void setup() {
         final var currentTime = System.currentTimeMillis();
         user1Email = String.format("user1_%d@server.com", currentTime);
+        user1Phone = String.format("+38%010d", currentTime % 10000000000L);
         password = "111111";
     }
 
     @Test
     void categoryFilterTest() throws JsonProcessingException {
         // create user
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         // create adv without category
         final var advWithoutCategory = createAdvertisement(webTestClient,
@@ -125,7 +129,7 @@ public class AdvertisementFiltersTest {
     @Test
     void titleFilterTest() throws JsonProcessingException {
         // create user
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         final var titles = List.of(
                 "Title keyword1 separated",
@@ -217,7 +221,7 @@ public class AdvertisementFiltersTest {
     @Test
     void categoryTitleFilterTest() throws JsonProcessingException {
         // create user
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         final var titles = List.of(
                 "Title keyword1 separated",
@@ -269,7 +273,7 @@ public class AdvertisementFiltersTest {
     // test sorting by price asc and desc
     @Test
     void sortingByPriceTest() throws JsonProcessingException {
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
                         "sortingByPriceTest description", Category.ELECTRONICS.name(), "10.00", true, null, null),
@@ -323,7 +327,7 @@ public class AdvertisementFiltersTest {
     // test that only active advs in response
     @Test
     void activeAdvTest() throws JsonProcessingException {
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, password);
+        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
                 Category.CLOTHES.name(), "123.45", true, null, null), tokens.accessToken());

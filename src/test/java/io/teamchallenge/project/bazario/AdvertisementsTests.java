@@ -6,7 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.util.Collections;
@@ -17,20 +19,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = {"file:.env_test_local"})
+@ActiveProfiles("test")
+@Sql("classpath:clean-db.sql")
 class AdvertisementsTests {
 
     @Autowired
     private WebTestClient webTestClient;
 
     private String user1Email;
+    private String user1Phone;
+
     private String user2Email;
+    private String user2Phone;
+
     private String password;
 
     @BeforeEach()
     void setup() {
         final var currentTime = System.currentTimeMillis();
         user1Email = String.format("user1_%d@server.com", currentTime);
+        user1Phone = String.format("+38%010d", currentTime % 10000000000L);
+
         user2Email = String.format("user2_%d@server.com", currentTime);
+        user2Phone = String.format("+38%010d", (currentTime + 1) % 10000000000L);
         password = "111111";
     }
 
@@ -51,8 +62,8 @@ class AdvertisementsTests {
     void getAdvByIdTest() throws JsonProcessingException {
         // 0.1 register and save a user1's token
 
-        var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         // 1.0 create active adv using user1's credentials
         final var activeAdvertisement = createAdvertisement(webTestClient,
@@ -101,8 +112,8 @@ class AdvertisementsTests {
     void updateAdvertisementTest() throws JsonProcessingException {
         /// setup
         // create two users
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         // create adv1 with user1
         final var advertisement = createAdvertisement(webTestClient,
@@ -156,8 +167,8 @@ class AdvertisementsTests {
     void deleteAdvertisementWithoutPicturesTest() throws JsonProcessingException {
         /// setup
         // create two users
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         /// test
         // create advertisement adv 1 without picture with user1
@@ -186,8 +197,8 @@ class AdvertisementsTests {
     void deleteAdvertisementWithPicturesTest() throws JsonProcessingException {
         /// setup
         // create two users
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         /// test
         // create advertisement adv2 with 2 pictures with user2
@@ -219,8 +230,8 @@ class AdvertisementsTests {
     @Test
     void deleteAdvertisementAddedToFavList() throws JsonProcessingException {
         // register user1 and user2
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         // create adv1 as user1 and adv2 as user2
         final var adv1 = createAdvertisement(webTestClient,

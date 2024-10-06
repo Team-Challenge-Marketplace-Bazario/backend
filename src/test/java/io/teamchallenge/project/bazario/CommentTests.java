@@ -7,7 +7,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.util.Collections;
@@ -17,13 +19,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = {"file:.env_test_local"})
+@ActiveProfiles("test")
+@Sql("classpath:clean-db.sql")
 public class CommentTests {
 
     @Autowired
     private WebTestClient webTestClient;
 
     private String user1Email;
+    private String user1Phone;
     private String user2Email;
+    private String user2Phone;
     private String password;
 
     private AdvertisementDto advDto1;
@@ -32,7 +38,10 @@ public class CommentTests {
     public void setUp() {
         final var currentTime = System.currentTimeMillis();
         user1Email = String.format("user1_%d@server.com", currentTime);
+        user1Phone = String.format("+38%010d", currentTime % 10000000000L);
+
         user2Email = String.format("user2_%d@server.com", currentTime);
+        user2Phone = String.format("+38%010d", (currentTime + 1) % 10000000000L);
         password = "111111";
 
         advDto1 = new AdvertisementDto(
@@ -42,8 +51,8 @@ public class CommentTests {
     @Test
     public void addCommentTest() throws JsonProcessingException {
         // create user1 and user2
-        final var login1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var login2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var login1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var login2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         // create adv1 by user1
         final var adv1 = createAdvertisement(webTestClient, advDto1, login1.accessToken());

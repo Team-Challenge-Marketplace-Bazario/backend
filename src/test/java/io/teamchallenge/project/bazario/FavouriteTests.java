@@ -6,7 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.util.Collections;
@@ -16,13 +18,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(locations = {"file:.env_test_local"})
+@ActiveProfiles("test")
+@Sql("classpath:clean-db.sql")
 public class FavouriteTests {
 
     @Autowired
     private WebTestClient webTestClient;
 
     private String user1Email;
+    private String user1Phone;
+
     private String user2Email;
+    private String user2Phone;
     private String password;
 
     private AdvertisementDto adv1;
@@ -32,7 +39,10 @@ public class FavouriteTests {
     public void setUp() {
         final var currentTime = System.currentTimeMillis();
         user1Email = String.format("user1_%d@server.com", currentTime);
+        user1Phone = String.format("+38%010d", currentTime % 10000000000L);
+
         user2Email = String.format("user2_%d@server.com", currentTime);
+        user2Phone = String.format("+38%010d", (currentTime + 1L) % 10000000000L);
         password = "111111";
 
         adv1 = new AdvertisementDto(
@@ -45,8 +55,8 @@ public class FavouriteTests {
     @Test
     public void addFavourite() throws JsonProcessingException {
         // create user1 and user2
-        final var loginResponse1 = TestHelper.registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = TestHelper.registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = TestHelper.registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var loginResponse2 = TestHelper.registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         // create adv1 for user1 and adv2 for user2
         final var advertisement1 = TestHelper.createAdvertisement(webTestClient, adv1, loginResponse1.accessToken());
@@ -132,8 +142,8 @@ public class FavouriteTests {
     @Test
     public void deleteFavourite() throws JsonProcessingException {
         // create user1 and user2
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
 
         // create adv1 as user1 and adv2 as user2
         final var advertisement1 = createAdvertisement(webTestClient, adv1, loginResponse1.accessToken());

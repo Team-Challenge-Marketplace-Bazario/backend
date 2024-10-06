@@ -12,6 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.net.URI;
 
+import static io.teamchallenge.project.bazario.TestHelper.MAIL_PIT_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -21,18 +22,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Sql("classpath:clean-db.sql")
 class AuthTests {
 
-    private static final String MAIL_PIT_URL = "http://localhost:8025/api/v1/message/latest";
-
     @Autowired
     private WebTestClient webTestClient;
 
     private String email;
+    private String phone;
     private String password;
 
     @BeforeEach
     void setUp() {
         final var timeMillis = System.currentTimeMillis();
         email = "user_" + timeMillis + "@server.com";
+        phone = String.format("+38%010d", timeMillis % 10000000000L);
         password = "111111";
     }
 
@@ -40,15 +41,14 @@ class AuthTests {
     void registerAndLogin() {
 
         // register
-        final var registerRequest = new RegisterRequest("Johnny", "Mnemonic", email, "+380991234567", password);
+        final var registerRequest = new RegisterRequest("Johnny", "Mnemonic", email, phone, password);
         webTestClient.post()
                 .uri("/auth/register")
                 .bodyValue(registerRequest)
                 .exchange()
                 .expectStatus().isOk();
 
-
-        // verify email
+        // retrieve token
         final var mailMessage = webTestClient.get()
                 .uri(URI.create(MAIL_PIT_URL))
                 .exchange()
@@ -62,6 +62,7 @@ class AuthTests {
         final var elements = mailMessage.Text().split("\\?token=");
         assertEquals(2, elements.length);
 
+        // verify email
         final var verifyEmailRequest = new VerifyEmailRequest(elements[1].trim());
         webTestClient.post()
                 .uri("/auth/verify-email")
@@ -98,7 +99,7 @@ class AuthTests {
     @Test
     void changePassword() {
         // register (must be ok)
-        final var registerRequest = new RegisterRequest("Johnny", "Mnemonic", email, "+380991234567", password);
+        final var registerRequest = new RegisterRequest("Johnny", "Mnemonic", email, phone, password);
         webTestClient.post()
                 .uri("/auth/register")
                 .bodyValue(registerRequest)
