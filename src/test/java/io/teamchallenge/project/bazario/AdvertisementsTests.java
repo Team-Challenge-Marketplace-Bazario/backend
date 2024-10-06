@@ -12,7 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import java.util.Collections;
 import java.util.List;
 
-import static io.teamchallenge.project.bazario.Helper.*;
+import static io.teamchallenge.project.bazario.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

@@ -11,7 +11,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.util.Collections;
 
-import static io.teamchallenge.project.bazario.Helper.*;
+import static io.teamchallenge.project.bazario.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -45,12 +45,12 @@ public class FavouriteTests {
     @Test
     public void addFavourite() throws JsonProcessingException {
         // create user1 and user2
-        final var loginResponse1 = Helper.registerUserAndGetTokens(webTestClient, user1Email, password);
-        final var loginResponse2 = Helper.registerUserAndGetTokens(webTestClient, user2Email, password);
+        final var loginResponse1 = TestHelper.registerUserAndGetTokens(webTestClient, user1Email, password);
+        final var loginResponse2 = TestHelper.registerUserAndGetTokens(webTestClient, user2Email, password);
 
         // create adv1 for user1 and adv2 for user2
-        final var advertisement1 = Helper.createAdvertisement(webTestClient, adv1, loginResponse1.accessToken());
-        final var advertisement2 = Helper.createAdvertisement(webTestClient, adv2, loginResponse2.accessToken());
+        final var advertisement1 = TestHelper.createAdvertisement(webTestClient, adv1, loginResponse1.accessToken());
+        final var advertisement2 = TestHelper.createAdvertisement(webTestClient, adv2, loginResponse2.accessToken());
 
         // make user1 add adv1 to fav
         addToFavList(webTestClient, advertisement1, loginResponse1.accessToken())
@@ -78,7 +78,7 @@ public class FavouriteTests {
                 .count());
 
         // make adv1 inactive by user1
-        var updatedAdv1 = Helper.updateAdvertisement(webTestClient, new AdvertisementDto(
+        var updatedAdv1 = TestHelper.updateAdvertisement(webTestClient, new AdvertisementDto(
                         advertisement1.getId(), null, null, null, null, false, Collections.emptyList(), null),
                 loginResponse1.accessToken());
 
@@ -95,7 +95,7 @@ public class FavouriteTests {
 
 
         // make adv2 inactive by user2
-        var updatedAdv2 = Helper.updateAdvertisement(webTestClient, new AdvertisementDto(
+        var updatedAdv2 = TestHelper.updateAdvertisement(webTestClient, new AdvertisementDto(
                         advertisement2.getId(), null, null, null, null, false, Collections.emptyList(), null),
                 loginResponse2.accessToken());
 

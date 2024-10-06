@@ -202,15 +202,17 @@ public class AuthServiceImpl implements AuthService {
 
         // check if non active
         if (!user.isVerified()) {
-            log.warn("User with username: {} is not verified", user.getEmail());
-            return;
+            throw new IllegalOperationException(
+                    String.format("User with username: %s is not verified", user.getEmail()));
         }
 
         // check if token present and expired
         if (user.getPasswordVerification() != null
             && user.getPasswordVerification().getExpires().isAfter(LocalDateTime.now())) {
-            log.warn("last restore password letter duration expires at {}", user.getPasswordVerification().getExpires());
-            return;
+            throw new IllegalOperationException(
+                    String.format("last restore password letter duration expires at %s",
+                            user.getPasswordVerification().getExpires())
+            );
         }
 
         user.setPasswordVerification(getVerification(verificationDuration));

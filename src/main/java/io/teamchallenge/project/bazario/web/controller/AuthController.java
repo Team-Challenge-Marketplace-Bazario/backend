@@ -1,14 +1,18 @@
 package io.teamchallenge.project.bazario.web.controller;
 
 import io.teamchallenge.project.bazario.entity.User;
+import io.teamchallenge.project.bazario.exceptions.IllegalOperationException;
 import io.teamchallenge.project.bazario.service.AuthService;
 import io.teamchallenge.project.bazario.web.dto.*;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -77,5 +81,11 @@ public class AuthController {
         return ResponseEntity
                 .status(deleted ? HttpStatus.OK : HttpStatus.BAD_REQUEST)
                 .build();
+    }
+
+    @ExceptionHandler({IllegalOperationException.class, MethodArgumentNotValidException.class})
+    public ResponseEntity<Void> handleIllegalOperationException(Exception ex) {
+        log.debug(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 }

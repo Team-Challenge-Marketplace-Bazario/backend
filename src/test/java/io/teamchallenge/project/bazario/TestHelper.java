@@ -13,7 +13,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import java.util.Collections;
 import java.util.List;
 
-public interface Helper {
+public interface TestHelper {
     static LoginResponse registerUserAndGetTokens(WebTestClient webTestClient, String email, String password) {
         final var registerRequest = new RegisterRequest("John", "Doe", "1234567890", email, password);
 
