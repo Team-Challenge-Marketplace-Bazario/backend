@@ -1,8 +1,10 @@
 package io.teamchallenge.project.bazario.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.teamchallenge.project.bazario.entity.Advertisement;
+import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.exceptions.AppException;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -13,7 +15,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @ToString
 public class AdvertisementDto {
 
@@ -42,6 +43,9 @@ public class AdvertisementDto {
 
     private String createDate;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private UserDto user;
+
     public AdvertisementDto(Advertisement vo) {
         this.id = vo.getId();
         this.title = vo.getTitle();
@@ -56,7 +60,23 @@ public class AdvertisementDto {
                     .map(AdvPictureDto::new)
                     .toList();
         }
+    }
 
+    public AdvertisementDto(Long id, String title, String description, String category, String price, Boolean status) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.category = category;
+        this.price = price;
+        this.status = status;
+    }
+
+    public AdvertisementDto(Advertisement vo, User user) {
+        this(vo);
+
+        if (user != null) {
+            this.user = new UserDto(user);
+        }
     }
 
     public AdvertisementDto(String jsonString) {

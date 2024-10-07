@@ -11,8 +11,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.Collections;
-
 import static io.teamchallenge.project.bazario.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,11 +43,9 @@ public class FavouriteTests {
         user2Phone = String.format("+38%010d", (currentTime + 1L) % 10000000000L);
         password = "111111";
 
-        adv1 = new AdvertisementDto(
-                null, "Title User1", "Description User1", null, "123.45", true, Collections.emptyList(), null);
+        adv1 = new AdvertisementDto(null, "Title User1", "Description User1", null, "123.45", true);
 
-        adv2 = new AdvertisementDto(
-                null, "Title User2", "Description User2", null, "67.89", true, Collections.emptyList(), null);
+        adv2 = new AdvertisementDto(null, "Title User2", "Description User2", null, "67.89", true);
     }
 
     @Test
@@ -89,8 +85,7 @@ public class FavouriteTests {
 
         // make adv1 inactive by user1
         var updatedAdv1 = TestHelper.updateAdvertisement(webTestClient, new AdvertisementDto(
-                        advertisement1.getId(), null, null, null, null, false, Collections.emptyList(), null),
-                loginResponse1.accessToken());
+                        advertisement1.getId(), null, null, null, null, false), loginResponse1.accessToken());
 
         assertFalse(updatedAdv1.getStatus());
 
@@ -106,8 +101,7 @@ public class FavouriteTests {
 
         // make adv2 inactive by user2
         var updatedAdv2 = TestHelper.updateAdvertisement(webTestClient, new AdvertisementDto(
-                        advertisement2.getId(), null, null, null, null, false, Collections.emptyList(), null),
-                loginResponse2.accessToken());
+                        advertisement2.getId(), null, null, null, null, false), loginResponse2.accessToken());
 
         assertFalse(updatedAdv2.getStatus());
 
@@ -194,7 +188,7 @@ public class FavouriteTests {
 
         // make adv2 inactive as user2
         updateAdvertisement(webTestClient,
-                new AdvertisementDto(advertisement2.getId(), null, null, null, null, false, Collections.emptyList(), null),
+                new AdvertisementDto(advertisement2.getId(), null, null, null, null, false),
                 loginResponse2.accessToken());
 
         // get fav list as user1 and make sure that there are no any advs
@@ -207,7 +201,7 @@ public class FavouriteTests {
 
         // make adv2 active as user2
         updateAdvertisement(webTestClient,
-                new AdvertisementDto(advertisement2.getId(), null, null, null, null, true, Collections.emptyList(), null),
+                new AdvertisementDto(advertisement2.getId(), null, null, null, null, true),
                 loginResponse2.accessToken());
 
         // get fav list as user1 and make sure that adv2 is there

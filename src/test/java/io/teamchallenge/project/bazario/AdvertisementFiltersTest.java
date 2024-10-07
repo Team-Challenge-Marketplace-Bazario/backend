@@ -50,18 +50,18 @@ public class AdvertisementFiltersTest {
 
         // create adv without category
         final var advWithoutCategory = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv Title", "categoryFilterTest", null, "123.45", true, null, null),
+                new AdvertisementDto(null, "Adv Title", "categoryFilterTest", null, "123.45", true),
                 tokens.accessToken());
 
         // create adv with electronics category
         final var advElectronics = createAdvertisement(webTestClient,
                 new AdvertisementDto(null, "Adv Title", "categoryFilterTest", Category.ELECTRONICS.name(), "123.45",
-                        true, null, null), tokens.accessToken());
+                        true), tokens.accessToken());
 
         // create adv with garden category
         final var advGarden = createAdvertisement(webTestClient,
                 new AdvertisementDto(null, "Adv Title", "categoryFilterTest", Category.GARDEN.name(), "123.45",
-                        true, null, null), tokens.accessToken());
+                        true), tokens.accessToken());
 
         // get all adv without filter (must be ok)
         var advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, null, null))
@@ -276,15 +276,15 @@ public class AdvertisementFiltersTest {
         final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
-                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "10.00", true, null, null),
+                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "10.00", true),
                 tokens.accessToken());
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
-                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "20.00", true, null, null),
+                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "20.00", true),
                 tokens.accessToken());
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
-                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "30.00", true, null, null),
+                        "sortingByPriceTest description", Category.ELECTRONICS.name(), "30.00", true),
                 tokens.accessToken());
 
         // sort by price ascending
@@ -330,16 +330,16 @@ public class AdvertisementFiltersTest {
         final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
-                Category.CLOTHES.name(), "123.45", true, null, null), tokens.accessToken());
+                Category.CLOTHES.name(), "123.45", true), tokens.accessToken());
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
-                Category.CLOTHES.name(), "123.45", false, null, null), tokens.accessToken());
+                Category.CLOTHES.name(), "123.45", false), tokens.accessToken());
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
-                null, "123.45", true, null, null), tokens.accessToken());
+                null, "123.45", true), tokens.accessToken());
 
         createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
-                null, "123.45", false, null, null), tokens.accessToken());
+                null, "123.45", false), tokens.accessToken());
 
         final var advs = getAdvertisementByFilter(webTestClient, null)
                 .expectStatus().isOk()

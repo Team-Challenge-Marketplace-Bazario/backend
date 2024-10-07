@@ -77,7 +77,11 @@ public class AdvertisementController {
                                                                  @AuthenticationPrincipal User user) {
         final var advertisement = advService.getById(advId, user);
 
-        return ResponseEntity.ok(new AdvertisementDto(advertisement));
+        final var advUser = user == null
+                ? null
+                : advertisement.getUser();
+
+        return ResponseEntity.ok(new AdvertisementDto(advertisement, advUser));
     }
 
     @PutMapping("/{advId}")

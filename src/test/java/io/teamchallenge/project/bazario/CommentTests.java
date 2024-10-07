@@ -12,8 +12,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.Collections;
-
 import static io.teamchallenge.project.bazario.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,8 +42,7 @@ public class CommentTests {
         user2Phone = String.format("+38%010d", (currentTime + 1) % 10000000000L);
         password = "111111";
 
-        advDto1 = new AdvertisementDto(
-                null, "Title User1", "Description User1", null, "123.45", true, Collections.emptyList(), null);
+        advDto1 = new AdvertisementDto(null, "Title User1", "Description User1", null, "123.45", true);
     }
 
     @Test
@@ -71,8 +68,7 @@ public class CommentTests {
 
         // make adv1 inactive
         var updatedAdv1 = updateAdvertisement(webTestClient,
-                new AdvertisementDto(adv1.getId(), null, null, null, null, false, Collections.emptyList(), null),
-                login1.accessToken());
+                new AdvertisementDto(adv1.getId(), null, null, null, null, false), login1.accessToken());
 
         assertFalse(updatedAdv1.getStatus());
 
@@ -82,8 +78,7 @@ public class CommentTests {
 
         // make adv1 active
         updatedAdv1 = updateAdvertisement(webTestClient,
-                new AdvertisementDto(adv1.getId(), null, null, null, null, true, Collections.emptyList(), null),
-                login1.accessToken());
+                new AdvertisementDto(adv1.getId(), null, null, null, null, true), login1.accessToken());
 
         assertTrue(updatedAdv1.getStatus());
 

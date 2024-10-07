@@ -215,6 +215,15 @@ public interface TestHelper {
     }
 
     static AdvertisementDto getActiveAdvDtoWithTitleAndCategory(String title, String category) {
-        return new AdvertisementDto(null, title, title, category, "123.45", true, null, null);
+        return new AdvertisementDto(null, title, title, category, "123.45", true);
+    }
+
+    static UserDto getUser(WebTestClient webTestClient, String token) {
+        return webTestClient.get()
+                .uri("/user")
+                .header("Authorization", "Bearer " + token)
+                .exchange()
+                .expectBody(UserDto.class)
+                .returnResult().getResponseBody();
     }
 }
