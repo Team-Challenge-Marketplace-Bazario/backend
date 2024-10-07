@@ -13,7 +13,6 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.util.List;
 
-import static io.teamchallenge.project.bazario.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -24,6 +23,8 @@ class AdvertisementsTests {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    private TestHelper helper;
 
     private String user1Email;
     private String user1Phone;
@@ -42,6 +43,9 @@ class AdvertisementsTests {
         user2Email = String.format("user2_%d@server.com", currentTime);
         user2Phone = String.format("+38%010d", (currentTime + 1) % 10000000000L);
         password = "111111";
+
+        helper = new TestHelper();
+        helper.setWebTestClient(webTestClient);
     }
 
     @Test
@@ -61,70 +65,67 @@ class AdvertisementsTests {
     void getAdvByIdTest() throws JsonProcessingException {
         // 0.1 register and save a user1's token
 
-        var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         // 1.0 create active adv using user1's credentials
-        final var activeAdvertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "getAdvByIdTest", null, "123.45", true),
+        final var activeAdvertisement = helper.createAdvertisement(new AdvertisementDto(null, "Adv title", "getAdvByIdTest", null, "123.45", true),
                 loginResponse1.accessToken());
 
         // 1.1 create inactive adv using user1's credentials
-        final var inActiveAdvertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "getAdvByIdTest", null, "123.45", false),
+        final var inActiveAdvertisement = helper.createAdvertisement(new AdvertisementDto(null, "Adv title", "getAdvByIdTest", null, "123.45", false),
                 loginResponse1.accessToken());
 
         // 2.0 get active adv using user1's credential
-        getAdvertisementById(webTestClient, activeAdvertisement.getId(), loginResponse1.accessToken())
+        helper.getAdvertisementById(activeAdvertisement.getId(), loginResponse1.accessToken())
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.id").isEqualTo(activeAdvertisement.getId());
 
         // 2.1 get active adv using user2's credential
-        getAdvertisementById(webTestClient, activeAdvertisement.getId(), loginResponse2.accessToken())
+        helper.getAdvertisementById(activeAdvertisement.getId(), loginResponse2.accessToken())
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.id").isEqualTo(activeAdvertisement.getId());
 
         // 2.2 get active adv using no credential
-        getAdvertisementById(webTestClient, activeAdvertisement.getId(), null)
+        helper.getAdvertisementById(activeAdvertisement.getId(), null)
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.id").isEqualTo(activeAdvertisement.getId());
 
         // 3.0 get inactive adv using user1's credential
-        getAdvertisementById(webTestClient, inActiveAdvertisement.getId(), loginResponse1.accessToken())
+        helper.getAdvertisementById(inActiveAdvertisement.getId(), loginResponse1.accessToken())
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.id").isEqualTo(inActiveAdvertisement.getId());
 
         // 3.1 get inactive adv using user2's credential
-        getAdvertisementById(webTestClient, inActiveAdvertisement.getId(), loginResponse2.accessToken())
+        helper.getAdvertisementById(inActiveAdvertisement.getId(), loginResponse2.accessToken())
                 .expectStatus().isNotFound();
 
         // 3.2 get inactive adv using no credential
-        getAdvertisementById(webTestClient, inActiveAdvertisement.getId(), null)
+        helper.getAdvertisementById(inActiveAdvertisement.getId(), null)
                 .expectStatus().isNotFound();
     }
 
     @Test
     void getAdvById_CheckUser() throws JsonProcessingException {
         // register user
-        var tokens1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        var tokens2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        var tokens1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        var tokens2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         // create adv
-        final var activeAdvertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title", "getAdvById_CheckUser", null, "123.45", true),
-                tokens1.accessToken());
+        final var activeAdvertisement = helper.createAdvertisement(
+                new AdvertisementDto(null, "Adv title", "getAdvById_CheckUser", null, "123.45", true), tokens1.accessToken());
 
         // get adv by id with auth token (must be user field with user in response)
-        final var advWithUser = getAdvertisementById(webTestClient, activeAdvertisement.getId(), tokens2.accessToken())
+        final var advWithUser = helper.getAdvertisementById(activeAdvertisement.getId(), tokens2.accessToken())
                 .expectStatus().isOk()
                 .expectBody(AdvertisementDto.class)
                 .returnResult().getResponseBody();
 
-        final var user1 = getUser(webTestClient, tokens1.accessToken());
+        final var user1 = helper.getUser(tokens1.accessToken());
 
         assertNotNull(advWithUser);
         assertNotNull(advWithUser.getId());
@@ -132,7 +133,7 @@ class AdvertisementsTests {
         assertEquals(user1.id(), advWithUser.getUser().id());
 
         // get adv without auth token (user field must be null in response)
-        final var advWithoutUser = getAdvertisementById(webTestClient, activeAdvertisement.getId(), null)
+        final var advWithoutUser = helper.getAdvertisementById(activeAdvertisement.getId(), null)
                 .expectStatus().isOk()
                 .expectBody(AdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -146,11 +147,11 @@ class AdvertisementsTests {
     void updateAdvertisementTest() throws JsonProcessingException {
         /// setup
         // create two users
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        final var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        final var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         // create adv1 with user1
-        final var advertisement = createAdvertisement(webTestClient,
+        final var advertisement = helper.createAdvertisement(
                 new AdvertisementDto(null, "Adv title", "updateAdvertisementTest", null, "123.45", true),
                 loginResponse1.accessToken());
 
@@ -201,29 +202,29 @@ class AdvertisementsTests {
     void deleteAdvertisementWithoutPicturesTest() throws JsonProcessingException {
         /// setup
         // create two users
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        final var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        final var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         /// test
         // create advertisement adv 1 without picture with user1
-        final var activeAdvertisement = createAdvertisement(webTestClient,
+        final var activeAdvertisement = helper.createAdvertisement(
                 new AdvertisementDto(null, "Adv title", "Adv deleteAdvertisementWithoutPicturesTest", null,
                         "123.45", true), loginResponse1.accessToken());
 
         // delete adv1 with user2 (should be not found)
-        deleteAdvertisement(webTestClient, activeAdvertisement, loginResponse2.accessToken())
+        helper.deleteAdvertisement(activeAdvertisement, loginResponse2.accessToken())
                 .expectStatus().isNotFound();
 
         // delete adv1 with no user (should be unauthorized)
-        deleteAdvertisement(webTestClient, activeAdvertisement, null)
+        helper.deleteAdvertisement(activeAdvertisement, null)
                 .expectStatus().isUnauthorized();
 
         // delete adv1 with user1 (should be ok)
-        deleteAdvertisement(webTestClient, activeAdvertisement, loginResponse1.accessToken())
+        helper.deleteAdvertisement(activeAdvertisement, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // get advertisement adv1 by id with user1 (should be not found)
-        getAdvertisementById(webTestClient, activeAdvertisement.getId(), loginResponse1.accessToken())
+        helper.getAdvertisementById(activeAdvertisement.getId(), loginResponse1.accessToken())
                 .expectStatus().isNotFound();
     }
 
@@ -231,58 +232,57 @@ class AdvertisementsTests {
     void deleteAdvertisementWithPicturesTest() throws JsonProcessingException {
         /// setup
         // create two users
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        final var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        final var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         /// test
         // create advertisement adv2 with 2 pictures with user2
-        final var advertisement = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv title with pics",
+        final var advertisement = helper.createAdvertisement(new AdvertisementDto(null, "Adv title with pics",
                         "deleteAdvertisementWithPicturesTest", null, "123.45", true), loginResponse2.accessToken());
 
-        final var advertisementResult = createAdvertisement(webTestClient, advertisement,
+        final var advertisementResult = helper.createAdvertisement(advertisement,
                 List.of("pics/pic1.png", "pics/pic2.jpg"), loginResponse2.accessToken());
 
         // delete adv2 with user1 (should be not found)
-        deleteAdvertisement(webTestClient, advertisementResult, loginResponse1.accessToken())
+        helper.deleteAdvertisement(advertisementResult, loginResponse1.accessToken())
                 .expectStatus().isNotFound();
 
         // delete adv2 with no user (should be unauthorized)
-        deleteAdvertisement(webTestClient, advertisementResult, null)
+        helper.deleteAdvertisement(advertisementResult, null)
                 .expectStatus().isUnauthorized();
 
         // delete adv2 with user2 (should be ok, make sure there are no advPics linked to this adv)
-        deleteAdvertisement(webTestClient, advertisementResult, loginResponse2.accessToken())
+        helper.deleteAdvertisement(advertisementResult, loginResponse2.accessToken())
                 .expectStatus().isOk();
 
         // get advertisement adv2 by id with user2 (should be not found)
-        getAdvertisementById(webTestClient, advertisementResult.getId(), loginResponse2.accessToken())
+        helper.getAdvertisementById(advertisementResult.getId(), loginResponse2.accessToken())
                 .expectStatus().isNotFound();
     }
 
     @Test
     void deleteAdvertisementAddedToFavList() throws JsonProcessingException {
         // register user1 and user2
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        final var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        final var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         // create adv1 as user1 and adv2 as user2
-        final var adv1 = createAdvertisement(webTestClient,
+        final var adv1 = helper.createAdvertisement(
                 new AdvertisementDto(null, "Adv1 title", "deleteAdvertisementAddedToFavList 1", null, "123.45", true),
                 loginResponse1.accessToken());
 
-        final var adv2 = createAdvertisement(webTestClient,
+        final var adv2 = helper.createAdvertisement(
                 new AdvertisementDto(null, "Adv2 title", "deleteAdvertisementAddedToFavList 2", null, "123.45", true),
                 loginResponse2.accessToken());
 
         // add adv1 and adv2 to user1's fav list
-        addToFavList(webTestClient, adv1, loginResponse1.accessToken())
+        helper.addToFavList(adv1, loginResponse1.accessToken())
                 .expectStatus().isOk();
-        addToFavList(webTestClient, adv2, loginResponse1.accessToken())
+        helper.addToFavList(adv2, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // get list of user1's favs and make sure that adv1 and adv2 are there
-        var favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        var favList1 = helper.getFavList(loginResponse1.accessToken());
         assertEquals(2, favList1.size());
         assertEquals(1, favList1.stream()
                 .filter(_adv -> _adv.getId().equals(adv1.getId()))
@@ -292,11 +292,11 @@ class AdvertisementsTests {
                 .count());
 
         // delete adv2 as user2 (must be ok)
-        deleteAdvertisement(webTestClient, adv2, loginResponse2.accessToken())
+        helper.deleteAdvertisement(adv2, loginResponse2.accessToken())
                 .expectStatus().isOk();
 
         // get list of user1's favs and make sure that only adv1 remains in the list
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
         assertEquals(1, favList1.size());
         assertEquals(1, favList1.stream()
                 .filter(_adv -> _adv.getId().equals(adv1.getId()))

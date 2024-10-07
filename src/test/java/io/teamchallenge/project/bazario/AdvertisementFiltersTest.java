@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
-import static io.teamchallenge.project.bazario.TestHelper.*;
+import static io.teamchallenge.project.bazario.TestHelper.getActiveAdvDtoWithTitleAndCategory;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -30,6 +30,7 @@ public class AdvertisementFiltersTest {
 
     @Autowired
     private WebTestClient webTestClient;
+    private TestHelper helper;
 
     private String user1Email;
     private String user1Phone;
@@ -41,30 +42,31 @@ public class AdvertisementFiltersTest {
         user1Email = String.format("user1_%d@server.com", currentTime);
         user1Phone = String.format("+38%010d", currentTime % 10000000000L);
         password = "111111";
+
+        helper = new TestHelper();
+        helper.setWebTestClient(webTestClient);
     }
 
     @Test
     void categoryFilterTest() throws JsonProcessingException {
         // create user
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var tokens = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
 
         // create adv without category
-        final var advWithoutCategory = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv Title", "categoryFilterTest", null, "123.45", true),
-                tokens.accessToken());
+        final var advWithoutCategory = helper.createAdvertisement(
+                new AdvertisementDto(null, "Adv Title", "categoryFilterTest", null, "123.45", true), tokens.accessToken());
 
         // create adv with electronics category
-        final var advElectronics = createAdvertisement(webTestClient,
+        final var advElectronics = helper.createAdvertisement(
                 new AdvertisementDto(null, "Adv Title", "categoryFilterTest", Category.ELECTRONICS.name(), "123.45",
                         true), tokens.accessToken());
 
         // create adv with garden category
-        final var advGarden = createAdvertisement(webTestClient,
-                new AdvertisementDto(null, "Adv Title", "categoryFilterTest", Category.GARDEN.name(), "123.45",
-                        true), tokens.accessToken());
+        final var advGarden = helper.createAdvertisement(new AdvertisementDto(null, "Adv Title", "categoryFilterTest", Category.GARDEN.name(), "123.45",
+                true), tokens.accessToken());
 
         // get all adv without filter (must be ok)
-        var advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, null, null))
+        var advs = helper.getAdvertisementByFilter(new AdvertisementFilter(null, null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -77,7 +79,7 @@ public class AdvertisementFiltersTest {
                 .count());
 
         // get all adv with filter category=electronics
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, Category.ELECTRONICS, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter(null, Category.ELECTRONICS, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -88,7 +90,7 @@ public class AdvertisementFiltersTest {
                 .allMatch(adv -> Category.ELECTRONICS.name().equals(adv.getCategory())));
 
         // get all adv with filter category=garden
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, Category.GARDEN, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter(null, Category.GARDEN, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -100,7 +102,7 @@ public class AdvertisementFiltersTest {
 
 
         // get all adv with filter category=household
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, Category.HOUSEHOLD, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter(null, Category.HOUSEHOLD, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -129,7 +131,7 @@ public class AdvertisementFiltersTest {
     @Test
     void titleFilterTest() throws JsonProcessingException {
         // create user
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var tokens = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
 
         final var titles = List.of(
                 "Title keyword1 separated",
@@ -142,11 +144,11 @@ public class AdvertisementFiltersTest {
         );
 
         for (String title : titles) {
-            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, null), tokens.accessToken());
+            helper.createAdvertisement(getActiveAdvDtoWithTitleAndCategory(title, null), tokens.accessToken());
         }
 
         // get all adv with filter title=keyword1 (must be advs with keyword1 in title only)
-        var advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("keyword1", null, null))
+        var advs = helper.getAdvertisementByFilter(new AdvertisementFilter("keyword1", null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -156,7 +158,7 @@ public class AdvertisementFiltersTest {
                 .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword1")));
 
         // get all adv with filter title=Keyword1 (must be advs with keyword1 without respect to case in title only)
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("KeyWord1", null, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter("KeyWord1", null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -167,7 +169,7 @@ public class AdvertisementFiltersTest {
 
 
         // get all adv with filter title=Keyword2
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("KeyWord2", null, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter("KeyWord2", null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -177,7 +179,7 @@ public class AdvertisementFiltersTest {
                 .allMatch(adv -> adv.getTitle().toLowerCase().contains("keyword2")));
 
         // get all adv with filter title=nonExistingKeyword (must be 0 advs)
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("nonExistingKeyword", null, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter("nonExistingKeyword", null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -195,10 +197,10 @@ public class AdvertisementFiltersTest {
         );
 
         for (String title : nationalTitles) {
-            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, null), tokens.accessToken());
+            helper.createAdvertisement(getActiveAdvDtoWithTitleAndCategory(title, null), tokens.accessToken());
         }
 
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("ключовеСлово", null, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter("ключовеСлово", null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -208,7 +210,7 @@ public class AdvertisementFiltersTest {
                 .allMatch(adv -> adv.getTitle().toLowerCase().contains("ключовеслово")));
 
         // get all adv with filter title=nonExistingKeyword (must be 0 advs)
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter("nonExistingKeyword", null, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter("nonExistingKeyword", null, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -221,7 +223,7 @@ public class AdvertisementFiltersTest {
     @Test
     void categoryTitleFilterTest() throws JsonProcessingException {
         // create user
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var tokens = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
 
         final var titles = List.of(
                 "Title keyword1 separated",
@@ -234,19 +236,18 @@ public class AdvertisementFiltersTest {
         );
 
         for (String title : titles) {
-            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, Category.CLOTHES.name()),
+            helper.createAdvertisement(getActiveAdvDtoWithTitleAndCategory(title, Category.CLOTHES.name()),
                     tokens.accessToken());
 
-            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, Category.ELECTRONICS.name()),
+            helper.createAdvertisement(getActiveAdvDtoWithTitleAndCategory(title, Category.ELECTRONICS.name()),
                     tokens.accessToken());
 
-            createAdvertisement(webTestClient, getActiveAdvDtoWithTitleAndCategory(title, null),
+            helper.createAdvertisement(getActiveAdvDtoWithTitleAndCategory(title, null),
                     tokens.accessToken());
         }
 
         // get all by title=keyword1 and category=clothes
-        var advs = getAdvertisementByFilter(webTestClient,
-                new AdvertisementFilter("keyword1", Category.CLOTHES, null))
+        var advs = helper.getAdvertisementByFilter(new AdvertisementFilter("keyword1", Category.CLOTHES, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -257,8 +258,7 @@ public class AdvertisementFiltersTest {
                                  && adv.getCategory().equals(Category.CLOTHES.name())));
 
         // get all by title=keyword1 and category=clothes
-        advs = getAdvertisementByFilter(webTestClient,
-                new AdvertisementFilter("keyword2", Category.ELECTRONICS, null))
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter("keyword2", Category.ELECTRONICS, null))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -273,22 +273,22 @@ public class AdvertisementFiltersTest {
     // test sorting by price asc and desc
     @Test
     void sortingByPriceTest() throws JsonProcessingException {
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var tokens = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "sortingByPriceTest",
                         "sortingByPriceTest description", Category.ELECTRONICS.name(), "10.00", true),
                 tokens.accessToken());
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "sortingByPriceTest",
                         "sortingByPriceTest description", Category.ELECTRONICS.name(), "20.00", true),
                 tokens.accessToken());
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "sortingByPriceTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "sortingByPriceTest",
                         "sortingByPriceTest description", Category.ELECTRONICS.name(), "30.00", true),
                 tokens.accessToken());
 
         // sort by price ascending
-        var advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, null, null),
+        var advs = helper.getAdvertisementByFilter(new AdvertisementFilter(null, null, null),
                 List.of(Pair.of("sort", "price"), Pair.of("sort", "asc")))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
@@ -305,7 +305,7 @@ public class AdvertisementFiltersTest {
         }
 
         // sort by price descending
-        advs = getAdvertisementByFilter(webTestClient, new AdvertisementFilter(null, null, null),
+        advs = helper.getAdvertisementByFilter(new AdvertisementFilter(null, null, null),
                 List.of(Pair.of("sort", "price"), Pair.of("sort", "desc")))
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
@@ -327,21 +327,21 @@ public class AdvertisementFiltersTest {
     // test that only active advs in response
     @Test
     void activeAdvTest() throws JsonProcessingException {
-        final var tokens = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
+        final var tokens = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
                 Category.CLOTHES.name(), "123.45", true), tokens.accessToken());
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
                 Category.CLOTHES.name(), "123.45", false), tokens.accessToken());
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
                 null, "123.45", true), tokens.accessToken());
 
-        createAdvertisement(webTestClient, new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
+        helper.createAdvertisement(new AdvertisementDto(null, "activeAdvTest", "activeAdvTest",
                 null, "123.45", false), tokens.accessToken());
 
-        final var advs = getAdvertisementByFilter(webTestClient, null)
+        final var advs = helper.getAdvertisementByFilter(null)
                 .expectStatus().isOk()
                 .expectBody(PagedAdvertisementDto.class)
                 .returnResult().getResponseBody();
@@ -352,5 +352,5 @@ public class AdvertisementFiltersTest {
 
     }
 
-    // test pagination
+    //todo: test pagination
 }

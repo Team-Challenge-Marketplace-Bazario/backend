@@ -11,7 +11,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import static io.teamchallenge.project.bazario.TestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -22,6 +21,8 @@ public class FavouriteTests {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    private TestHelper helper;
 
     private String user1Email;
     private String user1Phone;
@@ -46,24 +47,27 @@ public class FavouriteTests {
         adv1 = new AdvertisementDto(null, "Title User1", "Description User1", null, "123.45", true);
 
         adv2 = new AdvertisementDto(null, "Title User2", "Description User2", null, "67.89", true);
+
+        helper = new TestHelper();
+        helper.setWebTestClient(webTestClient);
     }
 
     @Test
     public void addFavourite() throws JsonProcessingException {
         // create user1 and user2
-        final var loginResponse1 = TestHelper.registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        final var loginResponse2 = TestHelper.registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        final var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        final var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         // create adv1 for user1 and adv2 for user2
-        final var advertisement1 = TestHelper.createAdvertisement(webTestClient, adv1, loginResponse1.accessToken());
-        final var advertisement2 = TestHelper.createAdvertisement(webTestClient, adv2, loginResponse2.accessToken());
+        final var advertisement1 = helper.createAdvertisement(adv1, loginResponse1.accessToken());
+        final var advertisement2 = helper.createAdvertisement(adv2, loginResponse2.accessToken());
 
         // make user1 add adv1 to fav
-        addToFavList(webTestClient, advertisement1, loginResponse1.accessToken())
+        helper.addToFavList(advertisement1, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // get list of user1's fav and make sure that adv1 is there
-        var favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        var favList1 = helper.getFavList(loginResponse1.accessToken());
 
         assertNotNull(favList1);
         assertTrue(
@@ -71,11 +75,11 @@ public class FavouriteTests {
         );
 
         // make user1 add adv2 to fav
-        addToFavList(webTestClient, advertisement2, loginResponse1.accessToken())
+        helper.addToFavList(advertisement2, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // get list of user1's fav and make sure that adv1 and adv2 are there.
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
 
         assertNotNull(favList1);
         assertEquals(2, favList1.stream()
@@ -84,13 +88,13 @@ public class FavouriteTests {
                 .count());
 
         // make adv1 inactive by user1
-        var updatedAdv1 = TestHelper.updateAdvertisement(webTestClient, new AdvertisementDto(
+        var updatedAdv1 = helper.updateAdvertisement(new AdvertisementDto(
                         advertisement1.getId(), null, null, null, null, false), loginResponse1.accessToken());
 
         assertFalse(updatedAdv1.getStatus());
 
         // get list of user1's fav and make sure that adv1 and adv2 are there
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
 
         assertNotNull(favList1);
         assertEquals(2, favList1.stream()
@@ -100,13 +104,13 @@ public class FavouriteTests {
 
 
         // make adv2 inactive by user2
-        var updatedAdv2 = TestHelper.updateAdvertisement(webTestClient, new AdvertisementDto(
+        var updatedAdv2 = helper.updateAdvertisement(new AdvertisementDto(
                         advertisement2.getId(), null, null, null, null, false), loginResponse2.accessToken());
 
         assertFalse(updatedAdv2.getStatus());
 
         // get list of user1's fav and make sure that adv2 isn't there
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
 
         assertNotNull(favList1);
         assertEquals(1, favList1.stream()
@@ -125,7 +129,7 @@ public class FavouriteTests {
                 .expectStatus().isOk();
 
         // get list of user1's fav and make sure that adv1 only once there
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
 
         assertNotNull(favList1);
         assertEquals(1, favList1.stream()
@@ -136,27 +140,27 @@ public class FavouriteTests {
     @Test
     public void deleteFavourite() throws JsonProcessingException {
         // create user1 and user2
-        final var loginResponse1 = registerUserAndGetTokens(webTestClient, user1Email, user1Phone, password);
-        final var loginResponse2 = registerUserAndGetTokens(webTestClient, user2Email, user2Phone, password);
+        final var loginResponse1 = helper.registerUserAndGetTokens(user1Email, user1Phone, password);
+        final var loginResponse2 = helper.registerUserAndGetTokens(user2Email, user2Phone, password);
 
         // create adv1 as user1 and adv2 as user2
-        final var advertisement1 = createAdvertisement(webTestClient, adv1, loginResponse1.accessToken());
-        final var advertisement2 = createAdvertisement(webTestClient, adv1, loginResponse2.accessToken());
+        final var advertisement1 = helper.createAdvertisement(adv1, loginResponse1.accessToken());
+        final var advertisement2 = helper.createAdvertisement(adv1, loginResponse2.accessToken());
 
         // add adv1 without auth (must be 401)
-        addToFavList(webTestClient, advertisement1, null)
+        helper.addToFavList(advertisement1, null)
                 .expectStatus().isUnauthorized();
 
         // add adv1 to user1's fav
-        addToFavList(webTestClient, advertisement1, loginResponse1.accessToken())
+        helper.addToFavList(advertisement1, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // add adv2 to user1's fav
-        addToFavList(webTestClient, advertisement2, loginResponse1.accessToken())
+        helper.addToFavList(advertisement2, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // get fav list as user1 and make sure that there are adv1 and adv2
-        var favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        var favList1 = helper.getFavList(loginResponse1.accessToken());
         assertEquals(2, favList1.size());
 
         assertEquals(1, favList1.stream()
@@ -168,51 +172,49 @@ public class FavouriteTests {
                 .count());
 
         // delete adv1 without auth (must be 401 - unauthorized)
-        deleteFromFavList(webTestClient, advertisement1, null)
+        helper.deleteFromFavList(advertisement1, null)
                 .expectStatus().isUnauthorized();
 
         // delete adv1 from user1's fav (must be ok - 200)
-        deleteFromFavList(webTestClient, advertisement1, loginResponse1.accessToken())
+        helper.deleteFromFavList(advertisement1, loginResponse1.accessToken())
                 .expectStatus().isOk();
 
         // delete adv1 from user1's fav (must be not found - 404)
-        deleteFromFavList(webTestClient, advertisement1, loginResponse1.accessToken())
+        helper.deleteFromFavList(advertisement1, loginResponse1.accessToken())
                 .expectStatus().isNotFound();
 
         // get fav list as user1 and make sure that there is only adv2
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
         assertEquals(1, favList1.size());
         assertEquals(1, favList1.stream()
                 .filter(_adv -> _adv.getId().equals(advertisement2.getId()))
                 .count());
 
         // make adv2 inactive as user2
-        updateAdvertisement(webTestClient,
-                new AdvertisementDto(advertisement2.getId(), null, null, null, null, false),
+        helper.updateAdvertisement(new AdvertisementDto(advertisement2.getId(), null, null, null, null, false),
                 loginResponse2.accessToken());
 
         // get fav list as user1 and make sure that there are no any advs
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
         assertEquals(0, favList1.size());
 
         // delete adv2 from user1's fav (must be not found - 404)
-        deleteFromFavList(webTestClient, advertisement2, loginResponse1.accessToken())
+        helper.deleteFromFavList(advertisement2, loginResponse1.accessToken())
                 .expectStatus().isNotFound();
 
         // make adv2 active as user2
-        updateAdvertisement(webTestClient,
-                new AdvertisementDto(advertisement2.getId(), null, null, null, null, true),
+        helper.updateAdvertisement(new AdvertisementDto(advertisement2.getId(), null, null, null, null, true),
                 loginResponse2.accessToken());
 
         // get fav list as user1 and make sure that adv2 is there
-        favList1 = getFavList(webTestClient, loginResponse1.accessToken());
+        favList1 = helper.getFavList(loginResponse1.accessToken());
         assertEquals(1, favList1.size());
         assertEquals(1, favList1.stream()
                 .filter(_adv -> _adv.getId().equals(advertisement2.getId()))
                 .count());
 
         // delete adv2 from user1's fav (must be ok - 200)
-        deleteFromFavList(webTestClient, advertisement2, loginResponse1.accessToken())
+        helper.deleteFromFavList(advertisement2, loginResponse1.accessToken())
                 .expectStatus().isOk();
     }
 }

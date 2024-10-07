@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.teamchallenge.project.bazario.web.controller.CreateCommentRequest;
 import io.teamchallenge.project.bazario.web.dto.*;
+import lombok.Setter;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
@@ -15,12 +16,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public interface TestHelper {
+@Setter
+public class TestHelper {
 
-    String MAIL_PIT_URL = "http://localhost:8025/api/v1/message/latest";
+    public static final String MAIL_PIT_URL = "http://localhost:8025/api/v1/message/latest";
 
-    static LoginResponse registerUserAndGetTokens(WebTestClient webTestClient,
-                                                  String email, String phone, String password) {
+    private WebTestClient webTestClient;
+
+    public LoginResponse registerUserAndGetTokens(String email, String phone, String password) {
         final var registerRequest = new RegisterRequest("Johny", "Mnemonic", email, phone, password);
 
         webTestClient.post()
@@ -55,11 +58,11 @@ public interface TestHelper {
                 .getResponseBody().blockFirst();
     }
 
-    static AdvertisementDto createAdvertisement(WebTestClient webTestClient, AdvertisementDto dto, String token) throws JsonProcessingException {
-        return createAdvertisement(webTestClient, dto, Collections.emptyList(), token);
+    public AdvertisementDto createAdvertisement(AdvertisementDto dto, String token) throws JsonProcessingException {
+        return createAdvertisement(dto, Collections.emptyList(), token);
     }
 
-    static AdvertisementDto createAdvertisement(WebTestClient webTestClient, AdvertisementDto dto, List<String> files, String token) throws JsonProcessingException {
+    public AdvertisementDto createAdvertisement(AdvertisementDto dto, List<String> files, String token) throws JsonProcessingException {
         final var objectMapper = new ObjectMapper();
         final var jsonString = objectMapper.writeValueAsString(dto);
 
@@ -82,7 +85,7 @@ public interface TestHelper {
                 .getResponseBody().blockFirst();
     }
 
-    static AdvertisementDto updateAdvertisement(WebTestClient webTestClient, AdvertisementDto dto, String token) {
+    public AdvertisementDto updateAdvertisement(AdvertisementDto dto, String token) {
         return webTestClient.put()
                 .uri("/adv/" + dto.getId())
                 .header("Authorization", "Bearer " + token)
@@ -92,7 +95,7 @@ public interface TestHelper {
                 .getResponseBody().blockFirst();
     }
 
-    static WebTestClient.ResponseSpec getAdvertisementById(WebTestClient webTestClient, Long id, String token) {
+    public WebTestClient.ResponseSpec getAdvertisementById(Long id, String token) {
         return webTestClient.get()
                 .uri("/adv/" + id)
                 .headers(header -> {
@@ -103,7 +106,7 @@ public interface TestHelper {
                 .exchange();
     }
 
-    static WebTestClient.ResponseSpec deleteAdvertisement(WebTestClient webTestClient, AdvertisementDto dto, String token) {
+    public WebTestClient.ResponseSpec deleteAdvertisement(AdvertisementDto dto, String token) {
         return webTestClient.delete()
                 .uri("/adv/" + dto.getId())
                 .headers(header -> {
@@ -114,7 +117,7 @@ public interface TestHelper {
                 .exchange();
     }
 
-    static List<AdvertisementDto> getFavList(WebTestClient webTestClient, String token) {
+    public List<AdvertisementDto> getFavList(String token) {
         return webTestClient.get()
                 .uri("/fav")
                 .headers(header -> {
@@ -128,7 +131,7 @@ public interface TestHelper {
                 .returnResult().getResponseBody();
     }
 
-    static WebTestClient.ResponseSpec addToFavList(WebTestClient webTestClient, AdvertisementDto advertisement, String token) {
+    public WebTestClient.ResponseSpec addToFavList(AdvertisementDto advertisement, String token) {
         return webTestClient.post()
                 .uri("/fav/" + advertisement.getId())
                 .headers(header -> {
@@ -139,9 +142,7 @@ public interface TestHelper {
                 .exchange();
     }
 
-    static WebTestClient.ResponseSpec deleteFromFavList(WebTestClient webTestClient,
-                                                        AdvertisementDto advertisement,
-                                                        String token) {
+    public WebTestClient.ResponseSpec deleteFromFavList(AdvertisementDto advertisement, String token) {
         return webTestClient.delete()
                 .uri("/fav/" + advertisement.getId())
                 .headers(header -> {
@@ -152,9 +153,7 @@ public interface TestHelper {
                 .exchange();
     }
 
-    static WebTestClient.ResponseSpec addComment(WebTestClient webTestClient, AdvertisementDto adv,
-                                                 CreateCommentRequest commentRequest,
-                                                 String token) {
+    public WebTestClient.ResponseSpec addComment(AdvertisementDto adv, CreateCommentRequest commentRequest, String token) {
 
         return webTestClient.post()
                 .uri("/comment/" + adv.getId())
@@ -167,7 +166,7 @@ public interface TestHelper {
                 .exchange();
     }
 
-    static List<CommentDto> getComments(WebTestClient webTestClient, AdvertisementDto adv) {
+    public List<CommentDto> getComments(AdvertisementDto adv) {
 
         return webTestClient.get()
                 .uri("/comment/" + adv.getId())
@@ -177,19 +176,18 @@ public interface TestHelper {
                 .getResponseBody();
     }
 
-    static WebTestClient.ResponseSpec getCommentsAsResponse(WebTestClient webTestClient, AdvertisementDto adv) {
+    public WebTestClient.ResponseSpec getCommentsAsResponse(AdvertisementDto adv) {
 
         return webTestClient.get()
                 .uri("/comment/" + adv.getId())
                 .exchange();
     }
 
-    static WebTestClient.ResponseSpec getAdvertisementByFilter(WebTestClient webTestClient, AdvertisementFilter filter) {
-        return getAdvertisementByFilter(webTestClient, filter, Collections.emptyList());
+    public WebTestClient.ResponseSpec getAdvertisementByFilter(AdvertisementFilter filter) {
+        return getAdvertisementByFilter(filter, Collections.emptyList());
     }
 
-    static WebTestClient.ResponseSpec getAdvertisementByFilter(WebTestClient webTestClient,
-                                                               AdvertisementFilter filter,
+    public WebTestClient.ResponseSpec getAdvertisementByFilter(AdvertisementFilter filter,
                                                                List<Pair<String, String>> sorting) {
         return webTestClient.get()
                 .uri(builder -> {
@@ -214,16 +212,16 @@ public interface TestHelper {
 
     }
 
-    static AdvertisementDto getActiveAdvDtoWithTitleAndCategory(String title, String category) {
-        return new AdvertisementDto(null, title, title, category, "123.45", true);
-    }
-
-    static UserDto getUser(WebTestClient webTestClient, String token) {
+    public UserDto getUser(String token) {
         return webTestClient.get()
                 .uri("/user")
                 .header("Authorization", "Bearer " + token)
                 .exchange()
                 .expectBody(UserDto.class)
                 .returnResult().getResponseBody();
+    }
+
+    public static AdvertisementDto getActiveAdvDtoWithTitleAndCategory(String title, String category) {
+        return new AdvertisementDto(null, title, title, category, "123.45", true);
     }
 }
