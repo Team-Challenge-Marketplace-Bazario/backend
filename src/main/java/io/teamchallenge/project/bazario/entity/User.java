@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -57,6 +58,10 @@ public class User implements UserDetails {
     })
     private Verification passwordVerification;
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER,
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private Set<Role> roles;
+
     public User(Long id, String firstName, String lastName, String email, String password, String phone,
                 boolean verified, Verification emailVerification, Verification passwordVerification) {
         this.id = id;
@@ -72,7 +77,9 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return roles == null
+                ? Collections.emptySet()
+                : roles;
     }
 
     @Override

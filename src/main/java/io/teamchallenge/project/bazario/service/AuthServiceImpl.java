@@ -1,7 +1,9 @@
 package io.teamchallenge.project.bazario.service;
 
 import io.teamchallenge.project.bazario.config.JwtTokenProvider;
+import io.teamchallenge.project.bazario.entity.Role;
 import io.teamchallenge.project.bazario.entity.User;
+import io.teamchallenge.project.bazario.entity.UserRole;
 import io.teamchallenge.project.bazario.entity.Verification;
 import io.teamchallenge.project.bazario.exceptions.IllegalOperationException;
 import io.teamchallenge.project.bazario.exceptions.JwtException;
@@ -23,6 +25,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 @Slf4j
@@ -87,6 +90,8 @@ public class AuthServiceImpl implements AuthService {
 
         final var user = new User(null, registerRequest.firstName(), registerRequest.lastName(),
                 registerRequest.email(), encodedPassword, registerRequest.phone(), false, emailVerification, null);
+
+        user.setRoles(Set.of(new Role(null, UserRole.USER, user)));
 
         final var savedUser = userRepository.save(user);
 
