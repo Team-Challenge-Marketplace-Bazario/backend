@@ -24,6 +24,11 @@ public class UserController {
         return ResponseEntity.ok(new UserDto(user));
     }
 
+    @GetMapping("/admin")
+    public ResponseEntity<UserDto> getAdminUserInfo(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(new UserDto(user));
+    }
+
     @PutMapping
     public ResponseEntity<UserDto> updateUserInfo(@AuthenticationPrincipal User user,
                                                   @Valid @RequestBody UpdateUserRequest updateRequest) {

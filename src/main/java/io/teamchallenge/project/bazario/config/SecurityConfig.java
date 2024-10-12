@@ -1,5 +1,6 @@
 package io.teamchallenge.project.bazario.config;
 
+import io.teamchallenge.project.bazario.entity.UserRole;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -40,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/adv/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/comment/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/user/admin").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(this.unAuthorizedAccessHandler))
