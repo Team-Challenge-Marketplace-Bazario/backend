@@ -40,6 +40,18 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByPhone(phone);
     }
 
+    @Override
+    @Transactional
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void delete(User user) {
+        userRepository.delete(user);
+    }
+
     @Transactional
     @Override
     public User updateUser(User user, UpdateUserRequest updateRequest) {

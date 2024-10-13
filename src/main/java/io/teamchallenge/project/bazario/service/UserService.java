@@ -12,4 +12,8 @@ public interface UserService extends UserDetailsService {
     Optional<User> findByPhone(String phone);
 
     User updateUser(User user, UpdateUserRequest updateUserRequest);
+
+    User save(User user);
+
+    void delete(User user);
 }

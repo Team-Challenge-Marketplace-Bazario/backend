@@ -13,6 +13,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import java.net.URI;
 
 import static io.teamchallenge.project.bazario.TestHelper.MAIL_PIT_URL;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -93,7 +94,8 @@ class AuthTests {
 
         assertNotNull(userDto);
         assertEquals(email, userDto.email());
-
+        assertNotNull(userDto.roles());
+        assertThat(userDto.roles()).containsExactlyInAnyOrder("USER");
     }
 
     @Test
