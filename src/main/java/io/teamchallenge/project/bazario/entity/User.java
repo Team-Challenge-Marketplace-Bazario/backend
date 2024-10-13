@@ -58,6 +58,14 @@ public class User implements UserDetails {
     })
     private Verification passwordVerification;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "token", column = @Column(name = "REFRESH_TOKEN")),
+            @AttributeOverride(name = "expires", column = @Column(name = "REFRESH_TOKEN_EXPIRES",
+                    columnDefinition = "timestamp"))
+    })
+    private Verification refreshToken;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER,
             cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<Role> roles;

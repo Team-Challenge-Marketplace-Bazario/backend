@@ -1,4 +1,6 @@
-version: '3'
+version: '3.9'
+
+name: bazario
 
 services:
     backend:
@@ -7,13 +9,22 @@ services:
             -   "8080:8080"
         env_file: .env
         depends_on:
-            -   db
+            db:
+                condition: service_healthy
+            mailpit:
+                condition: service_started
 
     db:
         image: postgres:16.4
         ports:
             -   "5432:5432"
         env_file: .env
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
         volumes:
             - postgres_data:/var/lib/postgresql/data
 volumes:

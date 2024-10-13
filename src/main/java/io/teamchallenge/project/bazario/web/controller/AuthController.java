@@ -41,7 +41,7 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         final var response = authService.refreshToken(request);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.of(response);
     }
 
     @PostMapping("/verify-email")

@@ -6,7 +6,6 @@ import io.teamchallenge.project.bazario.entity.User;
 import io.teamchallenge.project.bazario.entity.UserRole;
 import io.teamchallenge.project.bazario.entity.Verification;
 import io.teamchallenge.project.bazario.exceptions.IllegalOperationException;
-import io.teamchallenge.project.bazario.exceptions.JwtException;
 import io.teamchallenge.project.bazario.exceptions.UserNotFoundException;
 import io.teamchallenge.project.bazario.helpers.EMailHelper;
 import io.teamchallenge.project.bazario.repository.UserRepository;
@@ -26,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
@@ -36,27 +36,29 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RefreshTokenService refreshTokenService;
     private final EMailHelper eMailHelper;
+
     private final Long verificationDuration;
+    private final Long refreshTokenDurationSeconds;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            JwtTokenProvider jwtTokenProvider,
                            UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
-                           RefreshTokenService refreshTokenService,
                            EMailHelper eMailHelper,
-                           @Value("${app.verification_duration_s}") Long verificationDuration) {
+                           @Value("${app.verification_duration_s}") Long verificationDuration,
+                           @Value("${app.jwt_refresh_duration_s}") Long refreshTokenDurationSeconds) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.refreshTokenService = refreshTokenService;
         this.eMailHelper = eMailHelper;
         this.verificationDuration = verificationDuration;
+        this.refreshTokenDurationSeconds = refreshTokenDurationSeconds;
     }
 
     @Override
+    @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         final var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
@@ -70,9 +72,10 @@ public class AuthServiceImpl implements AuthService {
 
         final var accessToken = jwtTokenProvider.generateToken(user.getEmail());
 
-        final var refreshToken = refreshTokenService.getOrCreate(user);
+        final var refreshToken = updateOrCreate(user);
+        user.setRefreshToken(refreshToken);
 
-        return new LoginResponse(accessToken, refreshToken.getToken());
+        return new LoginResponse(accessToken, user.getRefreshToken().getToken());
     }
 
     @Override
@@ -99,21 +102,24 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse refreshToken(RefreshTokenRequest request) {
+    @Transactional
+    public Optional<LoginResponse> refreshToken(RefreshTokenRequest request) {
         final var token = request.refreshToken();
 
-        final var refreshToken = refreshTokenService.findByToken(token)
+        final var user = userRepository.findByRefreshTokenToken(token)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
-        if (!refreshTokenService.verifyExpiration(refreshToken)) {
-            throw new JwtException("Refresh token expired");
+        if (isExpired(user.getRefreshToken())) {
+            user.setRefreshToken(null);
+        } else {
+            user.getRefreshToken().setExpires(LocalDateTime.now().plusSeconds(refreshTokenDurationSeconds));
         }
-
-        final var user = refreshToken.getUser();
 
         final var accessToken = jwtTokenProvider.generateToken(user.getUsername());
 
-        return new LoginResponse(accessToken, refreshToken.getToken());
+        return user.getRefreshToken() == null
+                ? Optional.empty()
+                : Optional.of(new LoginResponse(accessToken, user.getRefreshToken().getToken()));
     }
 
     @Override
@@ -227,8 +233,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public boolean logout(User user) {
-        return refreshTokenService.deleteByUser(user) > 0;
+        user.setRefreshToken(null);
+
+        return true;
     }
 
     private Verification getVerification(long verificationDuration) {
@@ -245,4 +254,21 @@ public class AuthServiceImpl implements AuthService {
                 ? userRepository::findByEmail
                 : userRepository::findByPhone;
     }
+
+    private Verification updateOrCreate(User user) {
+        final var storedToken = user.getRefreshToken();
+        if (storedToken != null) {
+            storedToken.setExpires(LocalDateTime.now().plusSeconds(refreshTokenDurationSeconds));
+
+            return storedToken;
+        } else {
+            return new Verification(UUID.randomUUID().toString(),
+                    LocalDateTime.now().plusSeconds(refreshTokenDurationSeconds));
+        }
+    }
+
+    private boolean isExpired(Verification refreshToken) {
+        return refreshToken.getExpires().isBefore(LocalDateTime.now());
+    }
+
 }
